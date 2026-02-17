@@ -4188,27 +4188,28 @@ function initialiserPageResetPassword() {
     if (resetPasswordInitialized) return;
     resetPasswordInitialized = true;
     
-    // Récupérer les paramètres de l'URL
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get("email");
-    
-    // Stocker dans les champs cachés
-    const emailInput = document.getElementById("email");
-    
-    if (emailInput) emailInput.value = email || "";
-
-    // Vérifier que l'email est présent
-    if (!email) {
-        afficherMessageReset("danger", "❌ Lien de réinitialisation invalide. Veuillez refaire une demande.");
-        document.getElementById("resetBtn").disabled = true;
-    }
-
     // Éléments DOM
     const newPassword = document.getElementById("new_password");
     const confirmPassword = document.getElementById("confirm_password");
     const resetBtn = document.getElementById("resetBtn");
     const reqLength = document.getElementById("reqLength");
     const reqMatch = document.getElementById("reqMatch");
+
+    // Récupérer le hash de l'URL (c'est là que Supabase met le token)
+    // Format: #access_token=xxx&refresh_token=xxx&type=recovery
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get("access_token");
+    const type = hashParams.get("type");
+    
+    console.log('🔑 Type de token:', type);
+    console.log('🔑 Access token présent:', !!accessToken);
+    
+    // Vérifier que c'est bien un token de récupération
+    if (!accessToken || type !== 'recovery') {
+        afficherMessageReset("danger", "❌ Lien de réinitialisation invalide ou expiré. Veuillez refaire une demande.");
+        if (resetBtn) resetBtn.disabled = true;
+        return;
+    }
 
     // Toggle mot de passe
     document.getElementById("togglePassword")?.addEventListener("click", function() {
@@ -4302,19 +4303,12 @@ function afficherMessageReset(type, msg) {
 
 // Réinitialiser le mot de passe
 async function resetPassword() {
-    const emailInput = document.getElementById("email");
     const newPassword = document.getElementById("new_password");
     const confirmPassword = document.getElementById("confirm_password");
     
-    const email = emailInput?.value;
     const newPass = newPassword?.value;
     const confirm = confirmPassword?.value;
     
-    if (!email) {
-        afficherMessageReset("danger", "❌ Lien de réinitialisation invalide");
-        return;
-    }
-
     if (newPass.length < 6) {
         afficherMessageReset("danger", "❌ Le mot de passe doit contenir au moins 6 caractères");
         return;
@@ -4341,15 +4335,31 @@ async function resetPassword() {
             throw new Error("Supabase non initialisé");
         }
 
-        // Récupérer le token depuis l'URL (c'est Supabase qui le gère automatiquement)
-        // Le token est automatiquement extrait par Supabase de l'URL
+        // Récupérer le hash de l'URL pour le token
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get("access_token");
         
-        // Mettre à jour le mot de passe - Supabase utilise le token de l'URL automatiquement
+        if (!accessToken) {
+            throw new Error("Token de récupération manquant");
+        }
+
+        // Définir la session avec le token de récupération
+        const { error: sessionError } = await supabase1.auth.setSession({
+            access_token: accessToken,
+            refresh_token: hashParams.get("refresh_token") || ""
+        });
+
+        if (sessionError) throw sessionError;
+
+        // Maintenant que la session est établie, mettre à jour le mot de passe
         const { error } = await supabase1.auth.updateUser({
             password: newPass
         });
 
         if (error) throw error;
+
+        // Déconnecter l'utilisateur après la réinitialisation
+        await supabase1.auth.signOut();
 
         afficherMessageReset("success", "✅ Votre mot de passe a été modifié avec succès !");
         
@@ -4366,7 +4376,7 @@ async function resetPassword() {
         
         let message = "❌ Erreur lors de la réinitialisation";
         
-        if (error.message.includes("Auth session missing")) {
+        if (error.message.includes("Auth session missing") || error.message.includes("token")) {
             message = "❌ Lien de réinitialisation expiré ou invalide. Veuillez refaire une demande.";
         } else if (error.message.includes("rate limit")) {
             message = "⏳ Trop de tentatives. Veuillez réessayer dans quelques minutes.";
@@ -4379,6 +4389,18 @@ async function resetPassword() {
         btnSpinner.style.display = "none";
     }
 }
+
+// Ajouter la détection de page dans la section existante
+// Ajoutez cette condition dans votre bloc de détection de page
+// Vers la fin du fichier, dans la fonction document.addEventListener('DOMContentLoaded', ...)
+
+/*
+else if (filename === 'reset-password.html' || path.includes('reset-password')) {
+    if (typeof initialiserPageResetPassword === 'function') {
+        initialiserPageResetPassword();
+    }
+}
+*/
 
 
 
@@ -4456,6 +4478,11 @@ document.addEventListener('DOMContentLoaded', function() {
             initialiserPageHistoriqueVentes();
         }
     }
+    else if (filename === 'reset-password.html' || path.includes('reset-password')) {
+    if (typeof initialiserPageResetPassword === 'function') {
+        initialiserPageResetPassword();
+    }
+}
 });
 
 
