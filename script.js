@@ -4338,18 +4338,26 @@ async function resetPassword() {
         // Récupérer le hash de l'URL pour le token
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
         
         if (!accessToken) {
             throw new Error("Token de récupération manquant");
         }
 
+        console.log('🔑 Établissement de la session avec le token...');
+        
         // Définir la session avec le token de récupération
         const { error: sessionError } = await supabase1.auth.setSession({
             access_token: accessToken,
-            refresh_token: hashParams.get("refresh_token") || ""
+            refresh_token: refreshToken || ""
         });
 
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+            console.error('❌ Erreur session:', sessionError);
+            throw sessionError;
+        }
+
+        console.log('✅ Session établie, mise à jour du mot de passe...');
 
         // Maintenant que la session est établie, mettre à jour le mot de passe
         const { error } = await supabase1.auth.updateUser({
@@ -4357,6 +4365,8 @@ async function resetPassword() {
         });
 
         if (error) throw error;
+
+        console.log('✅ Mot de passe mis à jour, déconnexion...');
 
         // Déconnecter l'utilisateur après la réinitialisation
         await supabase1.auth.signOut();
@@ -4376,7 +4386,7 @@ async function resetPassword() {
         
         let message = "❌ Erreur lors de la réinitialisation";
         
-        if (error.message.includes("Auth session missing") || error.message.includes("token")) {
+        if (error.message.includes("Auth session missing") || error.message.includes("token") || error.message.includes("expired")) {
             message = "❌ Lien de réinitialisation expiré ou invalide. Veuillez refaire une demande.";
         } else if (error.message.includes("rate limit")) {
             message = "⏳ Trop de tentatives. Veuillez réessayer dans quelques minutes.";
@@ -4389,18 +4399,6 @@ async function resetPassword() {
         btnSpinner.style.display = "none";
     }
 }
-
-// Ajouter la détection de page dans la section existante
-// Ajoutez cette condition dans votre bloc de détection de page
-// Vers la fin du fichier, dans la fonction document.addEventListener('DOMContentLoaded', ...)
-
-/*
-else if (filename === 'reset-password.html' || path.includes('reset-password')) {
-    if (typeof initialiserPageResetPassword === 'function') {
-        initialiserPageResetPassword();
-    }
-}
-*/
 
 
 
@@ -4478,11 +4476,11 @@ document.addEventListener('DOMContentLoaded', function() {
             initialiserPageHistoriqueVentes();
         }
     }
-    else if (filename === 'reset-password.html' || path.includes('reset-password')) {
-    if (typeof initialiserPageResetPassword === 'function') {
-        initialiserPageResetPassword();
+    else if (filename === 'reset-password.html' || filename.includes('reset-password')) {
+        if (typeof initialiserPageResetPassword === 'function') {
+            initialiserPageResetPassword();
+        }
     }
-}
 });
 
 
