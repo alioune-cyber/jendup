@@ -4196,13 +4196,14 @@ function initialiserPageResetPassword() {
     const reqMatch = document.getElementById("reqMatch");
 
     // Récupérer le hash de l'URL (c'est là que Supabase met le token)
-    // Format: #access_token=xxx&refresh_token=xxx&type=recovery
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
     const type = hashParams.get("type");
     
     console.log('🔑 Type de token:', type);
     console.log('🔑 Access token présent:', !!accessToken);
+    console.log('🔑 Refresh token présent:', !!refreshToken);
     
     // Vérifier que c'est bien un token de récupération
     if (!accessToken || type !== 'recovery') {
@@ -4211,71 +4212,124 @@ function initialiserPageResetPassword() {
         return;
     }
 
-    // Toggle mot de passe
-    document.getElementById("togglePassword")?.addEventListener("click", function() {
-        const input = document.getElementById("new_password");
-        const icon = this.querySelector("i");
-        if (input.type === "password") {
-            input.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
-        } else {
-            input.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
-        }
-    });
+    // IMPORTANT: Attendre que Supabase ait fini de traiter l'URL
+    // Supabase peut déjà avoir automatiquement traité le token
+    setTimeout(() => {
+        // Vérifier si une session a déjà été établie
+        supabase1.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                console.log('✅ Session déjà établie automatiquement');
+                activerFormulaire();
+            } else {
+                console.log('⚠️ Aucune session automatique, tentative manuelle...');
+                etablirSessionManuelle();
+            }
+        });
+    }, 500);
 
-    document.getElementById("toggleConfirmPassword")?.addEventListener("click", function() {
-        const input = document.getElementById("confirm_password");
-        const icon = this.querySelector("i");
-        if (input.type === "password") {
-            input.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
-        } else {
-            input.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
-        }
-    });
-
-    // Validation en temps réel
-    function validerFormulaire() {
-        const pass = newPassword.value;
-        const confirm = confirmPassword.value;
-        
-        let valide = true;
-        
-        // Vérifier longueur
-        if (pass.length >= 6) {
-            reqLength.innerHTML = '<i class="fas fa-check-circle me-2"></i><span>Contenir au moins 6 caractères</span>';
-            reqLength.className = "requirement-item requirement-valid";
-        } else {
-            reqLength.innerHTML = '<i class="fas fa-times-circle me-2"></i><span>Contenir au moins 6 caractères</span>';
-            reqLength.className = "requirement-item requirement-invalid";
-            valide = false;
-        }
-        
-        // Vérifier correspondance
-        if (pass && confirm && pass === confirm) {
-            reqMatch.innerHTML = '<i class="fas fa-check-circle me-2"></i><span>Correspondre à la confirmation</span>';
-            reqMatch.className = "requirement-item requirement-valid";
-        } else {
-            reqMatch.innerHTML = '<i class="fas fa-times-circle me-2"></i><span>Correspondre à la confirmation</span>';
-            reqMatch.className = "requirement-item requirement-invalid";
-            valide = false;
-        }
-        
-        resetBtn.disabled = !valide;
-        return valide;
+    function activerFormulaire() {
+        // Activer les événements après la session
+        initialiserEvenementsFormulaire();
     }
 
-    newPassword.addEventListener("input", validerFormulaire);
-    confirmPassword.addEventListener("input", validerFormulaire);
+    async function etablirSessionManuelle() {
+        try {
+            console.log('🔑 Établissement manuel de la session avec le token...');
+            
+            const { error: sessionError } = await supabase1.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || ""
+            });
 
-    // Soumission du formulaire
-    resetBtn.addEventListener("click", resetPassword);
+            if (sessionError) {
+                console.error('❌ Erreur session:', sessionError);
+                afficherMessageReset("danger", "❌ Lien de réinitialisation invalide ou expiré. Veuillez refaire une demande.");
+                if (resetBtn) resetBtn.disabled = true;
+                return;
+            }
+
+            console.log('✅ Session établie manuellement');
+            initialiserEvenementsFormulaire();
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            afficherMessageReset("danger", "❌ Erreur lors de l'initialisation. Veuillez réessayer.");
+            if (resetBtn) resetBtn.disabled = true;
+        }
+    }
+
+    function initialiserEvenementsFormulaire() {
+        console.log('📝 Initialisation des événements du formulaire');
+
+        // Toggle mot de passe
+        document.getElementById("togglePassword")?.addEventListener("click", function() {
+            const input = document.getElementById("new_password");
+            const icon = this.querySelector("i");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        });
+
+        document.getElementById("toggleConfirmPassword")?.addEventListener("click", function() {
+            const input = document.getElementById("confirm_password");
+            const icon = this.querySelector("i");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        });
+
+        // Validation en temps réel
+        function validerFormulaire() {
+            const pass = newPassword.value;
+            const confirm = confirmPassword.value;
+            
+            let valide = true;
+            
+            // Vérifier longueur
+            if (pass.length >= 6) {
+                reqLength.innerHTML = '<i class="fas fa-check-circle me-2"></i><span>Contenir au moins 6 caractères</span>';
+                reqLength.className = "requirement-item requirement-valid";
+            } else {
+                reqLength.innerHTML = '<i class="fas fa-times-circle me-2"></i><span>Contenir au moins 6 caractères</span>';
+                reqLength.className = "requirement-item requirement-invalid";
+                valide = false;
+            }
+            
+            // Vérifier correspondance
+            if (pass && confirm && pass === confirm) {
+                reqMatch.innerHTML = '<i class="fas fa-check-circle me-2"></i><span>Correspondre à la confirmation</span>';
+                reqMatch.className = "requirement-item requirement-valid";
+            } else {
+                reqMatch.innerHTML = '<i class="fas fa-times-circle me-2"></i><span>Correspondre à la confirmation</span>';
+                reqMatch.className = "requirement-item requirement-invalid";
+                valide = false;
+            }
+            
+            resetBtn.disabled = !valide;
+            return valide;
+        }
+
+        newPassword.addEventListener("input", validerFormulaire);
+        confirmPassword.addEventListener("input", validerFormulaire);
+
+        // Soumission du formulaire
+        resetBtn.addEventListener("click", resetPassword);
+        
+        // Activer le bouton si le formulaire est valide
+        validerFormulaire();
+    }
 }
 
 // Afficher un message
@@ -4335,31 +4389,9 @@ async function resetPassword() {
             throw new Error("Supabase non initialisé");
         }
 
-        // Récupérer le hash de l'URL pour le token
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
-        
-        if (!accessToken) {
-            throw new Error("Token de récupération manquant");
-        }
+        console.log('🔑 Mise à jour du mot de passe...');
 
-        console.log('🔑 Établissement de la session avec le token...');
-        
-        // Définir la session avec le token de récupération
-        const { error: sessionError } = await supabase1.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || ""
-        });
-
-        if (sessionError) {
-            console.error('❌ Erreur session:', sessionError);
-            throw sessionError;
-        }
-
-        console.log('✅ Session établie, mise à jour du mot de passe...');
-
-        // Maintenant que la session est établie, mettre à jour le mot de passe
+        // Mettre à jour le mot de passe
         const { error } = await supabase1.auth.updateUser({
             password: newPass
         });
