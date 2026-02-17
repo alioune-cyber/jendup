@@ -4191,18 +4191,15 @@ function initialiserPageResetPassword() {
     // Récupérer les paramètres de l'URL
     const params = new URLSearchParams(window.location.search);
     const email = params.get("email");
-    const token = params.get("token");
     
     // Stocker dans les champs cachés
     const emailInput = document.getElementById("email");
-    const tokenInput = document.getElementById("token");
     
     if (emailInput) emailInput.value = email || "";
-    if (tokenInput) tokenInput.value = token || "";
 
-    // Vérifier que les paramètres sont présents
-    if (!email || !token) {
-        afficherMessageReset("danger", "❌ Lien de réinitialisation invalide ou expiré. Veuillez refaire une demande.");
+    // Vérifier que l'email est présent
+    if (!email) {
+        afficherMessageReset("danger", "❌ Lien de réinitialisation invalide. Veuillez refaire une demande.");
         document.getElementById("resetBtn").disabled = true;
     }
 
@@ -4251,21 +4248,21 @@ function initialiserPageResetPassword() {
         
         // Vérifier longueur
         if (pass.length >= 6) {
-            reqLength.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i> Au moins 6 caractères ✓';
-            reqLength.className = "requirement-valid";
+            reqLength.innerHTML = '<i class="fas fa-check-circle me-2"></i><span>Contenir au moins 6 caractères</span>';
+            reqLength.className = "requirement-item requirement-valid";
         } else {
-            reqLength.innerHTML = '<i class="fas fa-times-circle text-danger me-2"></i> Au moins 6 caractères';
-            reqLength.className = "requirement-invalid";
+            reqLength.innerHTML = '<i class="fas fa-times-circle me-2"></i><span>Contenir au moins 6 caractères</span>';
+            reqLength.className = "requirement-item requirement-invalid";
             valide = false;
         }
         
         // Vérifier correspondance
         if (pass && confirm && pass === confirm) {
-            reqMatch.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i> Les mots de passe correspondent ✓';
-            reqMatch.className = "requirement-valid";
+            reqMatch.innerHTML = '<i class="fas fa-check-circle me-2"></i><span>Correspondre à la confirmation</span>';
+            reqMatch.className = "requirement-item requirement-valid";
         } else {
-            reqMatch.innerHTML = '<i class="fas fa-times-circle text-danger me-2"></i> Les mots de passe correspondent';
-            reqMatch.className = "requirement-invalid";
+            reqMatch.innerHTML = '<i class="fas fa-times-circle me-2"></i><span>Correspondre à la confirmation</span>';
+            reqMatch.className = "requirement-item requirement-invalid";
             valide = false;
         }
         
@@ -4285,7 +4282,15 @@ function afficherMessageReset(type, msg) {
     const alertDiv = document.getElementById("alert");
     if (!alertDiv) return;
     
-    alertDiv.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'danger' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    
+    alertDiv.innerHTML = `
+        <div class="alert alert-${type}">
+            <i class="fas ${icon}"></i>
+            ${msg}
+        </div>
+    `;
     
     // Auto-suppression après 5 secondes pour les succès
     if (type === "success") {
@@ -4298,16 +4303,14 @@ function afficherMessageReset(type, msg) {
 // Réinitialiser le mot de passe
 async function resetPassword() {
     const emailInput = document.getElementById("email");
-    const tokenInput = document.getElementById("token");
     const newPassword = document.getElementById("new_password");
     const confirmPassword = document.getElementById("confirm_password");
     
     const email = emailInput?.value;
-    const token = tokenInput?.value;
     const newPass = newPassword?.value;
     const confirm = confirmPassword?.value;
     
-    if (!email || !token) {
+    if (!email) {
         afficherMessageReset("danger", "❌ Lien de réinitialisation invalide");
         return;
     }
@@ -4334,12 +4337,14 @@ async function resetPassword() {
     afficherMessageReset("info", "⏳ Traitement en cours...");
 
     try {
-        // Utiliser la même instance supabase1 que le reste de l'application
         if (!supabase1) {
             throw new Error("Supabase non initialisé");
         }
 
-        // Mettre à jour le mot de passe directement via l'API Supabase
+        // Récupérer le token depuis l'URL (c'est Supabase qui le gère automatiquement)
+        // Le token est automatiquement extrait par Supabase de l'URL
+        
+        // Mettre à jour le mot de passe - Supabase utilise le token de l'URL automatiquement
         const { error } = await supabase1.auth.updateUser({
             password: newPass
         });
@@ -4360,7 +4365,10 @@ async function resetPassword() {
         console.error('❌ Erreur réinitialisation:', error);
         
         let message = "❌ Erreur lors de la réinitialisation";
-        if (error.message.includes("rate limit")) {
+        
+        if (error.message.includes("Auth session missing")) {
+            message = "❌ Lien de réinitialisation expiré ou invalide. Veuillez refaire une demande.";
+        } else if (error.message.includes("rate limit")) {
             message = "⏳ Trop de tentatives. Veuillez réessayer dans quelques minutes.";
         }
         
@@ -4371,27 +4379,6 @@ async function resetPassword() {
         btnSpinner.style.display = "none";
     }
 }
-
-// ============================================
-// AJOUT À LA DÉTECTION DE PAGE
-// ============================================
-
-// Ajouter dans la fonction de détection existante
-document.addEventListener('DOMContentLoaded', function() {
-    const path = window.location.pathname;
-    const filename = path.split('/').pop() || 'home.html';
-    
-    console.log('📄 Page détectée:', filename);
-    
-    // ... vos autres conditions ...
-    
-    if (filename === 'reset-password.html' || path.includes('reset-password')) {
-        if (typeof initialiserPageResetPassword === 'function') {
-            initialiserPageResetPassword();
-        }
-    }
-});
-
 
 
 
