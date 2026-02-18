@@ -398,6 +398,281 @@
         .btn-deconnexion:hover {
             background: #c82333;
         }
+
+        /* ===== AJOUTS UNIQUEMENT POUR MOBILE ===== */
+        /* Sans modifier aucun style existant */
+        
+        @media (max-width: 768px) {
+            /* Header plus compact */
+            .navbar-brand {
+                font-size: 20px;
+            }
+            
+            .navbar-custom .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            
+            /* Menu burger */
+            .navbar-collapse {
+                background: rgba(255,255,255,0.15);
+                backdrop-filter: blur(10px);
+                padding: 15px;
+                border-radius: 12px;
+                margin-top: 10px;
+            }
+            
+            .navbar-collapse .mx-auto {
+                text-align: center;
+                padding: 10px 0;
+            }
+            
+            /* Conteneur principal */
+            .main-container {
+                padding: 1.5rem !important;
+                margin: 1rem auto !important;
+                border-radius: 16px;
+            }
+            
+            /* Titre principal */
+            .page-title {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .page-title:after {
+                width: 80px;
+            }
+            
+            .last-update {
+                font-size: 0.85rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .badge-cgu {
+                margin-left: 0;
+            }
+            
+            /* Table des matières */
+            .table-of-contents {
+                padding: 1rem;
+            }
+            
+            .table-of-contents ul {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-of-contents a {
+                font-size: 0.9rem;
+                padding: 0.4rem 0;
+            }
+            
+            /* Sections */
+            .section-title {
+                font-size: 1.2rem;
+                margin: 1.5rem 0 0.8rem 0;
+                flex-wrap: wrap;
+            }
+            
+            .section-title i {
+                font-size: 1.2rem;
+            }
+            
+            .subsection-title {
+                font-size: 1rem;
+            }
+            
+            .article-content {
+                font-size: 0.95rem;
+            }
+            
+            .article-content ul, 
+            .article-content ol {
+                padding-left: 1.2rem;
+            }
+            
+            .article-content li {
+                font-size: 0.9rem;
+            }
+            
+            /* Tableau des frais */
+            .table-responsive {
+                margin: 1rem 0;
+                border-radius: 8px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .table {
+                min-width: 500px;
+            }
+            
+            .table th, 
+            .table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+            
+            /* Politique de remboursement */
+            .refund-policy {
+                padding: 1.2rem !important;
+                margin: 1.5rem 0 !important;
+            }
+            
+            .refund-title {
+                font-size: 1.2rem;
+            }
+            
+            .refund-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .refund-card {
+                padding: 1.2rem;
+            }
+            
+            .refund-card h4 {
+                font-size: 1.1rem;
+            }
+            
+            .refund-percent {
+                font-size: 1.8rem;
+            }
+            
+            .refund-card ul li {
+                font-size: 0.85rem;
+            }
+            
+            .refund-note {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .refund-note i.fa-2x {
+                font-size: 1.5rem !important;
+                margin-right: 8px !important;
+            }
+            
+            /* Boîte highlight */
+            .highlight-box {
+                padding: 1rem;
+                margin: 1rem 0;
+                font-size: 0.9rem;
+            }
+            
+            /* Section récapitulative */
+            .highlight-box.text-center .row {
+                flex-direction: column;
+            }
+            
+            .highlight-box.text-center .col-md-6 {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .highlight-box.text-center .col-md-6:last-child {
+                margin-bottom: 0;
+            }
+            
+            .highlight-box.text-center h5 {
+                font-size: 1rem;
+            }
+            
+            .highlight-box.text-center ul {
+                font-size: 0.85rem;
+                padding-left: 1.2rem;
+            }
+            
+            /* Footer links */
+            .footer-links {
+                gap: 1rem;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 2rem;
+                padding-top: 1.5rem;
+            }
+            
+            .footer-links a {
+                font-size: 0.9rem;
+                padding: 0.3rem 0;
+            }
+            
+            /* Bouton retour en haut */
+            .btn-top {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+            
+            /* Dropdown utilisateur pour mobile */
+            .user-dropdown {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            
+            #btn-user {
+                padding: 6px 10px;
+                font-size: 14px;
+            }
+            
+            #btn-connexion {
+                padding: 6px 10px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            
+            #btn-connexion i {
+                margin-right: 4px;
+            }
+        }
+        
+        /* Pour très petits écrans */
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 18px;
+            }
+            
+            .main-container {
+                padding: 1rem !important;
+            }
+            
+            .page-title {
+                font-size: 1.3rem;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+            }
+            
+            .refund-card {
+                padding: 1rem;
+            }
+            
+            .refund-percent {
+                font-size: 1.5rem;
+            }
+            
+            .btn-top {
+                width: 40px;
+                height: 40px;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -518,8 +793,6 @@
                         <strong>Important :</strong> jëndUp gère la livraison et le service après-vente. Nous nous chargeons de livrer les articles et de traiter les éventuels remboursements en cas de problème.
                     </div>
                 </section>
-
-
 
                 <!-- ARTICLE 3 : ACCÈS AU SERVICE -->
                 <section id="article2">
@@ -682,7 +955,7 @@
                     <p>L'Acheteur doit vérifier l'état de l'article au moment de la livraison. Toute réclamation doit être faite immédiatement au livreur.</p>
                 </section>
 
-                <!-- ARTICLE 10 : POLITIQUE DE REMBOURSEMENT (NOUVELLE SECTION DÉTAILLÉE) -->
+                <!-- ARTICLE 10 : POLITIQUE DE REMBOURSEMENT -->
                 <section id="article9">
                     <h2 class="section-title">
                         <i class="fas fa-undo-alt"></i>
@@ -832,7 +1105,6 @@
                     
                     <p>L'ensemble des éléments de la Plateforme (textes, graphismes, logo, icônes) sont la propriété exclusive de jëndUp.</p>
                 </section>
-
 
                 <!-- ARTICLE 15 : MODIFICATION DES CGU -->
                 <section id="article14">

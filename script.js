@@ -3182,14 +3182,12 @@ function afficherMessageVentes(message, type) {
 
 
 // ============================================
-// PAGE HISTORIQUE DES COMMANDES - AVEC ANNULATION
+// PAGE HISTORIQUE DES COMMANDES - AVEC ANNULATION (ACHATS UNIQUEMENT)
 // ============================================
 
 let historiqueLoading = false;
 let commandes = [];
 let selectedCommandes = new Set();
-let infosVendeurs = new Map();
-let infosAcheteurs = new Map();
 let historiqueInitialized = false;
 let historiqueTimeout = null;
 
@@ -3278,13 +3276,7 @@ function initialiserEvenementsHistorique() {
     });
 }
 
-// Vérifier la connexion (simplifiée)
-async function verifierConnexionHistorique() {
-    // Cette fonction n'est plus nécessaire car nous utilisons verifierConnexion() directement
-    return true;
-}
-
-// Charger les commandes depuis Supabase
+// Charger les commandes depuis Supabase (UNIQUEMENT LES ACHATS)
 async function chargerCommandes() {
     if (!UTILISATEUR_COURANT) {
         console.error('❌ Utilisateur non connecté');
@@ -3301,7 +3293,7 @@ async function chargerCommandes() {
     try {
         console.log('📦 Chargement des commandes pour:', UTILISATEUR_COURANT);
 
-        // Récupérer les commandes où l'utilisateur est acheteur
+        // Récupérer UNIQUEMENT les commandes où l'utilisateur est acheteur
         const { data: commandesAcheteur, error: errorAcheteur } = await supabase1
             .from('commandes')
             .select(`
@@ -3316,41 +3308,15 @@ async function chargerCommandes() {
             console.error('Erreur chargement commandes acheteur:', errorAcheteur);
         }
 
-        // Récupérer les commandes où l'utilisateur est vendeur
-        const { data: commandesVendeur, error: errorVendeur } = await supabase1
-            .from('commandes')
-            .select(`
-                *,
-                produit:produits!id_produit(titre, image_url),
-                acheteur:utilisateurs!id_acheteur(nom, email, telephone)
-            `)
-            .eq('id_vendeur', UTILISATEUR_COURANT)
-            .order('created_at', { ascending: false });
+        // Utiliser UNIQUEMENT les commandes où l'utilisateur est acheteur
+        // (on ne fusionne PAS avec les commandes vendeur)
+        commandes = (commandesAcheteur || []).map(cmd => ({ 
+            ...cmd, 
+            role: 'acheteur',
+            autrePartie: cmd.vendeur 
+        }));
 
-        if (errorVendeur) {
-            console.error('Erreur chargement commandes vendeur:', errorVendeur);
-        }
-
-        // Fusionner et trier par date
-        const toutesCommandes = [
-            ...(commandesAcheteur || []).map(cmd => ({ 
-                ...cmd, 
-                role: 'acheteur',
-                autrePartie: cmd.vendeur 
-            })),
-            ...(commandesVendeur || []).map(cmd => ({ 
-                ...cmd, 
-                role: 'vendeur',
-                autrePartie: cmd.acheteur 
-            }))
-        ];
-
-        // Trier par date (plus récent d'abord)
-        commandes = toutesCommandes.sort((a, b) => 
-            new Date(b.created_at) - new Date(a.created_at)
-        );
-
-        console.log(`✅ ${commandes.length} commandes chargées`);
+        console.log(`✅ ${commandes.length} commandes d'achat chargées`);
 
         // Masquer l'indicateur de chargement
         const loadingIndicator = document.getElementById('loadingIndicator');
@@ -3374,7 +3340,7 @@ async function chargerCommandes() {
                 `;
             }
             if (container) container.classList.add('d-none');
-            console.log('📭 Aucune commande trouvée pour cet utilisateur');
+            console.log('📭 Aucune commande d\'achat trouvée pour cet utilisateur');
         } else {
             if (emptyState) emptyState.classList.add('d-none');
             if (container) {
@@ -3407,47 +3373,6 @@ async function chargerCommandes() {
         }
         
         annulerTimeoutHistorique();
-    }
-}
-
-// Charger les informations des utilisateurs (vendeurs/acheteurs)
-async function chargerInformationsUtilisateurs() {
-    if (!supabase1) return;
-    
-    const idsVendeurs = new Set();
-    const idsAcheteurs = new Set();
-
-    commandes.forEach(cmd => {
-        if (cmd.id_vendeur && cmd.id_vendeur !== UTILISATEUR_COURANT) {
-            idsVendeurs.add(cmd.id_vendeur);
-        }
-        if (cmd.id_acheteur && cmd.id_acheteur !== UTILISATEUR_COURANT) {
-            idsAcheteurs.add(cmd.id_acheteur);
-        }
-    });
-
-    // Charger infos vendeurs
-    if (idsVendeurs.size > 0) {
-        const { data: vendeurs } = await supabase1
-            .from('utilisateurs')
-            .select('id, nom, email, telephone')
-            .in('id', Array.from(idsVendeurs));
-
-        if (vendeurs) {
-            vendeurs.forEach(v => infosVendeurs.set(v.id, v));
-        }
-    }
-
-    // Charger infos acheteurs
-    if (idsAcheteurs.size > 0) {
-        const { data: acheteurs } = await supabase1
-            .from('utilisateurs')
-            .select('id, nom, email, telephone')
-            .in('id', Array.from(idsAcheteurs));
-
-        if (acheteurs) {
-            acheteurs.forEach(a => infosAcheteurs.set(a.id, a));
-        }
     }
 }
 
@@ -3519,10 +3444,12 @@ function creerElementCommande(commande) {
         case 'en cours de livraison':
             etatClass = 'etat-cours';
             etatIcon = 'fa-truck';
+            etatTexte = 'En cours de livraison';
             break;
         case 'préparée':
             etatClass = 'etat-livraison';
             etatIcon = 'fa-box';
+            etatTexte = 'Préparée';
             break;
         default:
             etatClass = 'etat-livraison';
@@ -3538,13 +3465,11 @@ function creerElementCommande(commande) {
     // Prix
     const prix = commande.prix || 0;
 
-    // Informations sur l'autre partie
-    const autrePartie = commande.autrePartie || {};
-    const role = commande.role || 'acheteur';
-    const roleNom = role === 'acheteur' ? 'Vendeur' : 'Acheteur';
+    // Informations sur le vendeur
+    const vendeur = commande.vendeur || {};
 
     // Vérifier si l'annulation est possible (moins de 10 minutes)
-    const peutAnnuler = role === 'acheteur' && commande.etat === 'en attente de livraison' && peutAnnulerCommande(commande.created_at);
+    const peutAnnuler = commande.etat === 'en attente de livraison' && peutAnnulerCommande(commande.created_at);
 
     // Construction du HTML
     card.innerHTML = `
@@ -3560,11 +3485,21 @@ function creerElementCommande(commande) {
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
-                        ${role === 'acheteur' ? 'Achat' : 'Vente'}
+                        <i class="fas fa-shopping-bag me-1"></i>Achat
                     </span>
+                    <div class="form-check">
+                        <input class="form-check-input checkbox-custom" type="checkbox" 
+                               id="check-${id}" onchange="toggleSelectionCommande('${id}', this.closest('.commande-card'))">
+                    </div>
                 </div>
             </div>
-            
+            ${peutAnnuler ? `
+                <div class="mt-2">
+                    <button class="btn btn-warning btn-sm" onclick="annulerCommande('${commande.id}')">
+                        <i class="fas fa-times me-1"></i>Annuler (10 min)
+                    </button>
+                </div>
+            ` : ''}
         </div>
         
         <div class="commande-body">
@@ -3580,16 +3515,16 @@ function creerElementCommande(commande) {
                 </div>
             </div>
             
-            <!-- Informations sur l'autre partie -->
-            ${autrePartie && autrePartie.nom ? `
+            <!-- Informations sur le vendeur -->
+            ${vendeur && vendeur.nom ? `
                 <div class="coordonnees">
                     <div class="mb-2">
-                        <i class="fas fa-user me-2"></i>
-                        <strong>${roleNom}:</strong> ${autrePartie.nom || 'Non renseigné'}
+                        <i class="fas fa-store me-2"></i>
+                        <strong>Vendeur:</strong> ${vendeur.nom || 'Non renseigné'}
                     </div>
                     <div class="mb-2">
                         <i class="fas fa-phone me-2"></i>
-                        ${autrePartie.telephone || 'Téléphone non disponible'}
+                        ${vendeur.telephone || 'Téléphone non disponible'}
                     </div>
                 </div>
             ` : ''}
@@ -3606,7 +3541,7 @@ function creerElementCommande(commande) {
             ${commande.telephone_client ? `
                 <div class="info-livraison mt-1">
                     <i class="fas fa-phone-alt"></i>
-                    Téléphone: ${commande.telephone_client}
+                    Téléphone de contact: ${commande.telephone_client}
                 </div>
             ` : ''}
             
@@ -3687,8 +3622,8 @@ function mettreAJourBoutonSuppression() {
     }
 }
 
-// Supprimer les commandes sélectionnées
-/*async function supprimerCommandes() {
+// Supprimer les commandes sélectionnées (RÉACTIVÉ)
+async function supprimerCommandes() {
     if (selectedCommandes.size === 0 || !supabase1) return;
 
     const message = selectedCommandes.size === 1 
@@ -3717,7 +3652,7 @@ function mettreAJourBoutonSuppression() {
         console.error('Erreur suppression commandes:', error);
         afficherMessageHistorique('❌ Erreur lors de la suppression', 'error');
     }
-}*/
+}
 
 // Afficher un message
 function afficherMessageHistorique(message, type) {

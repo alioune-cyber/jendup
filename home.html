@@ -11,7 +11,7 @@
   <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <!-- CSS Personnalisé -->
+  <!-- CSS Personnalisé (inchangé) -->
   <style>
     body { 
       background: #f8f9fa; 
@@ -362,6 +362,316 @@
       font-size: 48px;
       margin-bottom: 15px;
       color: #dee2e6;
+    }
+
+    /* ===== AJOUTS UNIQUEMENT POUR MOBILE ===== */
+    /* Sans modifier aucun style existant, juste des adaptations responsive */
+    
+    @media (max-width: 768px) {
+      /* Header plus compact */
+      .navbar-brand {
+        font-size: 20px;
+      }
+      
+      .btn-vendre {
+        padding: 6px 12px;
+        font-size: 14px;
+      }
+      
+      .btn-vendre i {
+        margin-right: 4px;
+      }
+      
+      /* Menu burger amélioré */
+      .navbar-collapse {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+      
+      .navbar-collapse .d-flex {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px !important;
+      }
+      
+      /* Carousel plus petit */
+      .carousel-slide-content {
+        height: 350px !important;
+      }
+      
+      .carousel-slide-content h2 {
+        font-size: 1.8rem !important;
+      }
+      
+      .carousel-slide-content p {
+        font-size: 1rem !important;
+      }
+      
+      .carousel-slide-content .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+        margin: 5px !important;
+      }
+      
+      .carousel-slide-content .btn-lg {
+        font-size: 14px;
+      }
+      
+      /* Filtres en ligne avec défilement horizontal */
+      .filter-section {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+      
+      .filter-section h4 {
+        margin-bottom: 12px !important;
+        font-size: 1.1rem;
+      }
+      
+      .filter-section > div {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .filter-section .btn {
+        flex-shrink: 0;
+      }
+      
+      /* Produits en 2 colonnes */
+      .row.g-4 > [class*="col-"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+      
+      .product-card img {
+        height: 150px;
+      }
+      
+      .product-card .p-3 {
+        padding: 12px !important;
+      }
+      
+      .product-card h6 {
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      
+      .product-card p {
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      
+      .prix {
+        font-size: 1rem;
+      }
+      
+      .badge-occasion, .badge-etat {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+      
+      /* Comment ça marche en ligne horizontale */
+      .how-it-works .row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 15px;
+        margin: 0 -10px;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .how-it-works .col-md-4 {
+        flex: 0 0 280px;
+        max-width: 280px;
+        padding: 0 10px;
+      }
+      
+      .step-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        height: 100%;
+      }
+      
+      .step-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        margin-bottom: 15px;
+      }
+      
+      .step-card h5 {
+        font-size: 1rem;
+      }
+      
+      .step-card p {
+        font-size: 0.85rem;
+      }
+      
+      /* Avantages en 2 colonnes */
+      .container.my-5 .row.g-3 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .container.my-5 .col-md-4 {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+      }
+      
+      .container.my-5 .text-center.p-4 {
+        padding: 15px !important;
+      }
+      
+      .container.my-5 i.fa-4x {
+        font-size: 2.5rem !important;
+        margin-bottom: 10px !important;
+      }
+      
+      .container.my-5 h6 {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+      }
+      
+      .container.my-5 p.small {
+        font-size: 0.75rem;
+      }
+      
+      /* FAQ plus compacte */
+      .faq-section {
+        padding: 30px 0;
+        margin: 30px 0;
+      }
+      
+      .faq-title {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+      }
+      
+      .accordion-button {
+        padding: 12px 15px;
+        font-size: 14px;
+      }
+      
+      .accordion-body {
+        padding: 15px;
+        font-size: 13px;
+      }
+      
+      /* CTA en colonne */
+      .bg-primary {
+        padding: 30px 20px !important;
+      }
+      
+      .bg-primary h3 {
+        font-size: 1.4rem;
+      }
+      
+      .bg-primary .lead {
+        font-size: 1rem;
+        margin-bottom: 20px !important;
+      }
+      
+      .bg-primary .btn {
+        display: block;
+        width: 100%;
+        margin: 10px 0 !important;
+      }
+      
+      .bg-primary .btn:first-child {
+        margin-bottom: 10px;
+      }
+      
+      /* Footer adapté */
+      footer {
+        padding: 30px 0 15px !important;
+      }
+      
+      footer .row > div {
+        margin-bottom: 25px;
+      }
+      
+      footer h5 {
+        font-size: 1.1rem;
+      }
+      
+      footer h6 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+      }
+      
+      footer ul {
+        font-size: 0.85rem;
+      }
+      
+      footer .d-flex {
+        justify-content: center;
+      }
+      
+      footer .fab {
+        font-size: 1.5rem !important;
+      }
+      
+      /* Dropdown utilisateur pour mobile */
+      .user-dropdown {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      
+      #btn-user {
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      
+      /* Ajustements container */
+      .container {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+    
+    /* Pour très petits écrans */
+    @media (max-width: 480px) {
+      .navbar-brand {
+        font-size: 18px;
+      }
+      
+      .btn-vendre {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+      
+      .product-card h6 {
+        font-size: 13px;
+      }
+      
+      .prix {
+        font-size: 0.9rem;
+      }
+      
+      .badge-occasion, .badge-etat {
+        font-size: 9px;
+        padding: 2px 6px;
+      }
+      
+      .carousel-slide-content h2 {
+        font-size: 1.4rem !important;
+      }
     }
   </style>
 </head>
