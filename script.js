@@ -1640,7 +1640,7 @@ async function verifierConnexionExistanteInscription() {
     }
 }
 
-// ============================================
+/*// ============================================
 // FONCTIONS DE CALCUL DES FRAIS
 // ============================================
 
@@ -2303,10 +2303,1179 @@ function genererCodeUniqueDetail() {
     }
     code += '-' + Date.now().toString().slice(-4);
     return code;
-}
+}*/
+
+
+
+
+
+
+
+
+
 
 
 // ============================================
+// FONCTIONS DE CALCUL DES FRAIS
+// ============================================
+
+function arrondi50(nombre) {
+    return Math.ceil(nombre / 50) * 50;
+}
+
+// 🔥 Fonction pour vérifier les commandes gratuites restantes
+async function verifierCommandesGratuites() {
+    if (!UTILISATEUR_COURANT || !supabase1) return 0;
+    
+    try {
+        const { data, error } = await supabase1
+            .from('utilisateurs')
+            .select('gratuit')
+            .eq('id', UTILISATEUR_COURANT)
+            .single();
+            
+        if (error) throw error;
+        
+        return data?.gratuit || 0;
+    } catch (error) {
+        console.error('❌ Erreur vérification commandes gratuites:', error);
+        return 0;
+    }
+}
+
+// 🔥 Fonction de calcul des frais avec prise en compte des commandes gratuites
+async function calculerFraisAvecGratuit(prixArticle) {
+    const commandesGratuites = await verifierCommandesGratuites();
+    
+    // Si l'utilisateur a encore des commandes gratuites (gratuit > 0)
+    if (commandesGratuites > 0) {
+        return {
+            fraisAcheteur: 0,
+            livraison: 0,
+            total: prixArticle,
+            gratuit: true
+        };
+    }
+    
+    // Sinon, calcul normal (gratuit = 0)
+    let fraisAcheteur = 0;
+    let livraison = 0;
+    
+    if (prixArticle <= 1000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 300;
+    } else if (prixArticle <= 5000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 500;
+    } else if (prixArticle <= 10000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 700;
+    } else if (prixArticle <= 20000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 1000;
+    } else if (prixArticle <= 50000) {
+        fraisAcheteur = 100 + (prixArticle * 0.03);
+        livraison = 1500;
+    } else if (prixArticle <= 100000) {
+        fraisAcheteur = 120 + (prixArticle * 0.03);
+        livraison = 2000;
+    } else {
+        fraisAcheteur = 800 + (prixArticle * 0.03);
+        livraison = 3500;
+    }
+
+    fraisAcheteur = arrondi50(fraisAcheteur);
+    let total = arrondi50(prixArticle + fraisAcheteur + livraison);
+    
+    return {
+        fraisAcheteur: Math.round(fraisAcheteur),
+        livraison: livraison,
+        total: total,
+        gratuit: false
+    };
+}
+
+
+// Fonction synchrone pour les affichages statiques (conservée pour compatibilité)
+function calculerFrais(prixArticle) {
+    let fraisAcheteur = 0;
+    let livraison = 0;
+    
+    if (prixArticle <= 1000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 300;
+    } else if (prixArticle <= 5000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 500;
+    } else if (prixArticle <= 10000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 700;
+    } else if (prixArticle <= 20000) {
+        fraisAcheteur = 90 + (prixArticle * 0.03);
+        livraison = 1000;
+    } else if (prixArticle <= 50000) {
+        fraisAcheteur = 100 + (prixArticle * 0.03);
+        livraison = 1500;
+    } else if (prixArticle <= 100000) {
+        fraisAcheteur = 120 + (prixArticle * 0.03);
+        livraison = 2000;
+    } else {
+        fraisAcheteur = 800 + (prixArticle * 0.03);
+        livraison = 3500;
+    }
+
+    fraisAcheteur = arrondi50(fraisAcheteur);
+    let total = arrondi50(prixArticle + fraisAcheteur + livraison);
+
+    return {
+        fraisAcheteur: Math.round(fraisAcheteur),
+        livraison: livraison,
+        total: total
+    };
+}
+
+// ============================================
+// PAGE DÉTAIL ANNONCE - AVEC CARTE ET FRAIS
+// ============================================
+
+let detailLoading = false;
+let produitActuel = null;
+let vendeurActuel = null;
+let imagesListe = [];
+let achatModal = null;
+let lightboxModal = null;
+let map = null;
+let marker = null;
+let positionLivraison = null;
+
+// Initialiser la page détail
+function initialiserPageDetail() {
+    console.log('🔍 Initialisation page détail annonce...');
+    
+    // Récupérer l'ID du produit depuis l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const produitId = urlParams.get('id');
+    
+    if (!produitId) {
+        afficherErreurDetail();
+        return;
+    }
+    
+    initialiserModalsDetail();
+    verifierConnexionDetail(produitId);
+    
+    // Timeout de sécurité
+    setTimeout(() => {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator && !loadingIndicator.classList.contains('d-none')) {
+            console.log('⏰ Timeout de chargement');
+            afficherErreurDetail();
+        }
+    }, 10000);
+}
+
+// Initialiser les modals Bootstrap
+function initialiserModalsDetail() {
+    if (typeof bootstrap === 'undefined') return;
+    
+    const achatModalEl = document.getElementById('achatModal');
+    const lightModal = document.getElementById('lightboxModal');
+    
+    if (achatModalEl) {
+        achatModal = new bootstrap.Modal(achatModalEl);
+    }
+    if (lightModal) {
+        lightboxModal = new bootstrap.Modal(lightModal);
+    }
+}
+
+// Vérifier la connexion et charger le produit
+async function verifierConnexionDetail(produitId) {
+    try {
+        const { data: { session }, error } = await supabase1.auth.getSession();
+        
+        if (error) throw error;
+        
+        if (session && session.user) {
+            UTILISATEUR_COURANT = session.user.id;
+            await chargerInfosUtilisateur();
+            afficherUtilisateurConnecte();
+        }
+        
+        // Charger le produit (connecté ou non)
+        await chargerProduitDetail(produitId);
+        
+    } catch (error) {
+        console.error('Erreur vérification connexion:', error);
+        // Continuer sans utilisateur connecté
+        await chargerProduitDetail(produitId);
+    }
+}
+
+// Charger les détails du produit
+async function chargerProduitDetail(produitId) {
+    if (!supabase1) return;
+    
+    try {
+        // Charger le produit avec les infos du vendeur
+        const { data: produit, error } = await supabase1
+            .from('produits')
+            .select(`
+                *,
+                vendeur:utilisateurs!vendeur_id(*)
+            `)
+            .eq('id', produitId)
+            .single();
+
+        if (error) throw error;
+        
+        if (!produit) {
+            afficherErreurDetail();
+            return;
+        }
+
+        produitActuel = produit;
+        vendeurActuel = produit.vendeur;
+
+        // Charger les images (si stockées dans un tableau JSON)
+        imagesListe = produit.images || [produit.image_url].filter(Boolean);
+
+        // Afficher le produit
+        afficherProduitDetail();
+
+    } catch (error) {
+        console.error('Erreur chargement produit:', error);
+        afficherErreurDetail();
+    }
+}
+
+// Afficher le produit
+function afficherProduitDetail() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const annonceContent = document.getElementById('annonceContent');
+    
+    if (loadingIndicator) loadingIndicator.classList.add('d-none');
+    if (annonceContent) annonceContent.classList.remove('d-none');
+
+    // Afficher les images
+    afficherImagesDetail();
+    
+    // Afficher les infos produit
+    const productTitle = document.getElementById('productTitle');
+    if (productTitle) productTitle.textContent = produitActuel.titre || 'Sans titre';
+    
+    const productPrice = document.getElementById('productPrice');
+    if (productPrice) productPrice.textContent = formatPrixDetail(produitActuel.prix);
+    
+    // Afficher la description avec un meilleur formatage
+    const productDescription = document.getElementById('productDescription');
+    if (productDescription) {
+        const descriptionTexte = produitActuel.description || 'Aucune description disponible.';
+        const descriptionHtml = descriptionTexte
+            .replace(/\n/g, '<br>')
+            .replace(/\r/g, '<br>')
+            .replace(/\n\r/g, '<br>');
+        productDescription.innerHTML = descriptionHtml;
+    }
+    
+    // Afficher les métadonnées
+    afficherMetaDetail();
+    
+    // Afficher la carte vendeur
+    afficherVendeurDetail();
+    
+    // Afficher les détails techniques
+    afficherDetailsTechniquesDetail();
+    
+    // Afficher les boutons d'action
+    afficherBoutonsActionDetail();
+    
+    // Charger les produits similaires
+    chargerProduitsSimilairesDetail();
+}
+
+// Afficher les images
+function afficherImagesDetail() {
+    const mainImage = document.getElementById('mainImage');
+    const thumbnails = document.getElementById('thumbnails');
+    
+    if (!mainImage || !thumbnails) return;
+    
+    if (imagesListe.length > 0) {
+        mainImage.src = imagesListe[0];
+        
+        thumbnails.innerHTML = '';
+        imagesListe.forEach((img, index) => {
+            const thumb = document.createElement('img');
+            thumb.src = img;
+            thumb.className = `thumbnail ${index === 0 ? 'active' : ''}`;
+            thumb.onclick = () => changerImagePrincipaleDetail(img, index);
+            thumb.onerror = () => { thumb.src = 'image/default-product.jpg'; };
+            thumbnails.appendChild(thumb);
+        });
+    } else {
+        mainImage.src = 'image/default-product.jpg';
+    }
+}
+
+// Changer l'image principale
+function changerImagePrincipaleDetail(src, index) {
+    const mainImage = document.getElementById('mainImage');
+    if (mainImage) mainImage.src = src;
+    
+    document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+        thumb.classList.toggle('active', i === index);
+    });
+}
+
+// Ouvrir la lightbox
+function ouvrirLightboxDetail() {
+    const mainImage = document.getElementById('mainImage');
+    if (!mainImage) return;
+    
+    const lightboxImage = document.getElementById('lightboxImage');
+    if (lightboxImage) lightboxImage.src = mainImage.src;
+    
+    if (lightboxModal) lightboxModal.show();
+}
+
+// Afficher les métadonnées
+function afficherMetaDetail() {
+    const meta = document.getElementById('productMeta');
+    if (!meta || !produitActuel) return;
+    
+    const date = new Date(produitActuel.created_at);
+    const maintenant = new Date();
+    const diffHeures = Math.floor((maintenant - date) / (1000 * 60 * 60));
+    
+    let tempsAjout;
+    if (diffHeures < 1) tempsAjout = "À l'instant";
+    else if (diffHeures < 24) tempsAjout = `Il y a ${diffHeures} heure${diffHeures > 1 ? 's' : ''}`;
+    else {
+        const diffJours = Math.floor(diffHeures / 24);
+        tempsAjout = `Il y a ${diffJours} jour${diffJours > 1 ? 's' : ''}`;
+    }
+
+    meta.innerHTML = `
+        <div class="meta-item">
+            <i class="fas fa-tag"></i>
+            <span>${produitActuel.categorie || 'Non catégorisé'}</span>
+        </div>
+        <div class="meta-item">
+            <i class="fas fa-clock"></i>
+            <span>Ajouté ${tempsAjout}</span>
+        </div>
+        ${produitActuel.etat ? `
+        <div class="meta-item">
+            <i class="fas fa-star"></i>
+            <span>${produitActuel.etat}</span>
+        </div>
+        ` : ''}
+    `;
+}
+
+// Afficher la carte vendeur
+function afficherVendeurDetail() {
+    const container = document.getElementById('sellerCard');
+    if (!container) return;
+    
+    if (!vendeurActuel) {
+        container.innerHTML = '<p class="text-muted">Informations vendeur non disponibles</p>';
+        return;
+    }
+
+    const initiales = vendeurActuel.nom ? 
+        vendeurActuel.nom.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 
+        'V';
+
+    const nbVentes = vendeurActuel.nombre_ventes || 0;
+    const note = vendeurActuel.note_moyenne || 0;
+
+    container.innerHTML = `
+        <div class="seller-header">
+            <div class="seller-avatar">${initiales}</div>
+            <div class="seller-info">
+                <div class="seller-name">${vendeurActuel.nom || 'Vendeur'}</div>
+            </div>
+        </div>
+        <div class="seller-stats">
+            <div class="stat">
+                <div class="stat-value">${nbVentes}</div>
+                <div class="stat-label">Ventes</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">${vendeurActuel.telephone ? '✓' : '✗'}</div>
+                <div class="stat-label">Téléphone</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">${vendeurActuel.email ? '✓' : '✗'}</div>
+                <div class="stat-label">Email</div>
+            </div>
+        </div>
+    `;
+}
+
+// Générer des étoiles pour la note
+function genererEtoilesDetail(note) {
+    const noteNum = parseFloat(note);
+    let etoiles = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= Math.floor(noteNum)) {
+            etoiles += '<i class="fas fa-star"></i>';
+        } else if (i - 0.5 <= noteNum) {
+            etoiles += '<i class="fas fa-star-half-alt"></i>';
+        } else {
+            etoiles += '<i class="far fa-star"></i>';
+        }
+    }
+    return etoiles;
+}
+
+// Afficher les boutons d'action
+function afficherBoutonsActionDetail() {
+    const container = document.getElementById('actionButtons');
+    if (!container || !produitActuel || !vendeurActuel) return;
+    
+    if (!UTILISATEUR_COURANT) {
+        container.innerHTML = `
+            <a href="connexion.html?redirect=detail&id=${produitActuel.id}" class="btn-acheter">
+                <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour acheter
+            </a>
+        `;
+        return;
+    }
+
+    if (UTILISATEUR_COURANT === vendeurActuel?.id) {
+        container.innerHTML = `
+            <a href="mes-produits.html" class="btn-acheter">
+                <i class="fas fa-box me-2"></i>Voir mes produits
+            </a>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <button class="btn-acheter" onclick="ouvrirAchatDetail()">
+            <i class="fas fa-shopping-cart me-2"></i>Acheter directement
+        </button>
+    `;
+}
+
+// Afficher les détails techniques
+function afficherDetailsTechniquesDetail() {
+    const container = document.getElementById('detailsTechniques');
+    if (!container || !produitActuel) return;
+    
+    const details = [
+        { label: 'Marque', valeur: produitActuel.marque || 'Non spécifiée' },
+        { label: 'Modèle', valeur: produitActuel.modele || 'Non spécifié' },
+        { label: 'Couleur', valeur: produitActuel.couleur || 'Non spécifiée' },
+        { label: 'État', valeur: produitActuel.etat || 'Non spécifié' },
+        { label: 'Référence', valeur: produitActuel.id.substring(0, 8) + '...' },
+    ];
+
+    container.innerHTML = `
+        <h3 class="details-title">
+            <i class="fas fa-info-circle me-2"></i>Détails du produit
+        </h3>
+        ${details.map(d => `
+            <div class="detail-row">
+                <div class="detail-label">${d.label}</div>
+                <div class="detail-value">${d.valeur}</div>
+            </div>
+        `).join('')}
+    `;
+}
+
+// Charger les produits similaires
+async function chargerProduitsSimilairesDetail() {
+    if (!supabase1 || !produitActuel) return;
+    
+    try {
+        const { data, error } = await supabase1
+            .from('produits')
+            .select('*')
+            .eq('categorie', produitActuel.categorie)
+            .neq('id', produitActuel.id)
+            .eq('est_actif', true)
+            .limit(4);
+
+        if (error) throw error;
+
+        const container = document.getElementById('similarProducts');
+        if (!container) return;
+
+        if (!data || data.length === 0) {
+            container.classList.add('d-none');
+            return;
+        }
+
+        container.classList.remove('d-none');
+        
+        container.innerHTML = `
+            <h3 class="similar-title">
+                <i class="fas fa-tags me-2"></i>Produits similaires
+            </h3>
+            <div class="similar-grid">
+                ${data.map(p => `
+                    <div class="similar-card" onclick="window.location.href='detail-annonce.html?id=${p.id}'">
+                        <img src="${p.image_url || 'image/default-product.jpg'}" 
+                             alt="${p.titre}" 
+                             class="similar-image"
+                             onerror="this.src='image/default-product.jpg'">
+                        <div class="similar-info">
+                            <div class="similar-name">${p.titre || 'Sans titre'}</div>
+                            <div class="similar-price">${formatPrixDetail(p.prix)}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Erreur chargement produits similaires:', error);
+        const container = document.getElementById('similarProducts');
+        if (container) container.classList.add('d-none');
+    }
+}
+
+/*// Initialiser la carte de livraison
+function initialiserCarteLivraison() {
+    const dakarCenter = [14.7167, -17.4677];
+    
+    if (map) {
+        map.remove();
+    }
+    
+    map = L.map('map').setView(dakarCenter, 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    const dakarBounds = L.latLngBounds(
+        L.latLng(14.6, -17.6),
+        L.latLng(14.8, -17.3)
+    );
+    map.setMaxBounds(dakarBounds);
+    map.on('drag', function() {
+        map.panInsideBounds(dakarBounds, { animate: false });
+    });
+    
+    marker = L.marker(dakarCenter, { draggable: true }).addTo(map);
+    marker.bindPopup('Déplacez-moi pour choisir votre position').openPopup();
+    
+    marker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        positionLivraison = [pos.lat, pos.lng];
+        mettreAJourFraisLivraison();
+    });
+    
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        positionLivraison = [e.latlng.lat, e.latlng.lng];
+        mettreAJourFraisLivraison();
+    });
+    
+    positionLivraison = dakarCenter;
+    mettreAJourFraisLivraison();
+}*/
+
+
+/*// Initialiser la carte de livraison
+function initialiserCarteLivraison() {
+    const dakarCenter = [14.7167, -17.4677];
+    
+    if (map) {
+        map.remove();
+    }
+    
+    map = L.map('map').setView(dakarCenter, 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    const dakarBounds = L.latLngBounds(
+        L.latLng(14.6, -17.6),
+        L.latLng(14.8, -17.3)
+    );
+    map.setMaxBounds(dakarBounds);
+    map.on('drag', function() {
+        map.panInsideBounds(dakarBounds, { animate: false });
+    });
+    
+    marker = L.marker(dakarCenter, { draggable: true }).addTo(map);
+    marker.bindPopup('Déplacez-moi pour choisir votre position').openPopup();
+    
+    marker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        positionLivraison = [pos.lat, pos.lng];
+        // 🔥 NE PAS rappeler mettreAJourFraisLivraison() ici
+        // mettreAJourFraisLivraison(); ← À SUPPRIMER OU COMMENTER
+    });
+    
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        positionLivraison = [e.latlng.lat, e.latlng.lng];
+        // 🔥 NE PAS rappeler mettreAJourFraisLivraison() ici
+        // mettreAJourFraisLivraison(); ← À SUPPRIMER OU COMMENTER
+    });
+    
+    positionLivraison = dakarCenter;
+    // 🔥 NE PAS rappeler mettreAJourFraisLivraison() ici
+    // mettreAJourFraisLivraison(); ← À SUPPRIMER OU COMMENTER
+}*/
+
+// Initialiser la carte de livraison avec géolocalisation
+function initialiserCarteLivraison() {
+    // Centre par défaut (Dakar)
+    const dakarCenter = [14.7167, -17.4677];
+    
+    if (map) {
+        map.remove();
+    }
+    
+    // Créer la carte avec une vue temporaire
+    map = L.map('map').setView(dakarCenter, 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    const dakarBounds = L.latLngBounds(
+        L.latLng(14.6, -17.6),
+        L.latLng(14.8, -17.3)
+    );
+    map.setMaxBounds(dakarBounds);
+    map.on('drag', function() {
+        map.panInsideBounds(dakarBounds, { animate: false });
+    });
+    
+    // 🔥 Essayer d'obtenir la position exacte de l'utilisateur
+    if (navigator.geolocation) {
+        console.log('📍 Tentative de géolocalisation...');
+        
+        // Afficher un indicateur de chargement
+        const mapContainer = document.getElementById('map');
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'text-center p-3';
+        loadingMsg.id = 'geoloc-loading';
+        loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Recherche de votre position...';
+        mapContainer.parentNode.insertBefore(loadingMsg, mapContainer);
+        
+        navigator.geolocation.getCurrentPosition(
+            // Succès - position trouvée
+            function(position) {
+                console.log('✅ Position trouvée:', position.coords);
+                
+                // Supprimer le message de chargement
+                const loadingEl = document.getElementById('geoloc-loading');
+                if (loadingEl) loadingEl.remove();
+                
+                const userPos = [position.coords.latitude, position.coords.longitude];
+                
+                // Vérifier si la position est dans les limites de Dakar
+                if (dakarBounds.contains(L.latLng(userPos[0], userPos[1]))) {
+                    // Centrer la carte sur la position de l'utilisateur
+                    map.setView(userPos, 14);
+                    
+                    // Créer le marqueur à la position de l'utilisateur
+                    marker = L.marker(userPos, { draggable: true }).addTo(map);
+                    positionLivraison = userPos;
+                    
+                    marker.bindPopup('📌 Votre position actuelle<br>Déplacez-moi pour ajuster').openPopup();
+                } else {
+                    console.log('⚠️ Position hors zone, utilisation du centre de Dakar');
+                    // Utiliser le centre de Dakar
+                    marker = L.marker(dakarCenter, { draggable: true }).addTo(map);
+                    positionLivraison = dakarCenter;
+                    marker.bindPopup('Déplacez-moi pour choisir votre position').openPopup();
+                }
+                
+                // Ajouter les événements de déplacement
+                ajouterEvenementsMarqueur();
+            },
+            // Erreur - impossible d'obtenir la position
+            function(error) {
+                console.warn('⚠️ Erreur de géolocalisation:', error.message);
+                
+                // Supprimer le message de chargement
+                const loadingEl = document.getElementById('geoloc-loading');
+                if (loadingEl) loadingEl.remove();
+                
+                // Utiliser le centre de Dakar par défaut
+                marker = L.marker(dakarCenter, { draggable: true }).addTo(map);
+                positionLivraison = dakarCenter;
+                marker.bindPopup('Déplacez-moi pour choisir votre position').openPopup();
+                
+                // Afficher un message selon le type d'erreur
+                let message = "Position par défaut (Dakar)";
+                if (error.code === 1) {
+                    message = "🌍 Position non partagée - Utilisation du centre de Dakar";
+                } else if (error.code === 2) {
+                    message = "📡 Position non disponible - Utilisation du centre de Dakar";
+                } else if (error.code === 3) {
+                    message = "⏱️ Délai dépassé - Utilisation du centre de Dakar";
+                }
+                
+                const infoMsg = document.createElement('div');
+                infoMsg.className = 'alert alert-warning mt-2 p-2 small';
+                infoMsg.innerHTML = `<i class="fas fa-info-circle me-1"></i>${message}`;
+                document.getElementById('map').parentNode.appendChild(infoMsg);
+                
+                // Supprimer le message après 5 secondes
+                setTimeout(() => {
+                    if (infoMsg.parentNode) infoMsg.remove();
+                }, 5000);
+                
+                ajouterEvenementsMarqueur();
+            },
+            // Options de géolocalisation
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        // Navigateur ne supporte pas la géolocalisation
+        console.log('⚠️ Géolocalisation non supportée');
+        
+        marker = L.marker(dakarCenter, { draggable: true }).addTo(map);
+        positionLivraison = dakarCenter;
+        marker.bindPopup('Déplacez-moi pour choisir votre position').openPopup();
+        
+        const infoMsg = document.createElement('div');
+        infoMsg.className = 'alert alert-warning mt-2 p-2 small';
+        infoMsg.innerHTML = '<i class="fas fa-info-circle me-1"></i>Géolocalisation non supportée - Position par défaut (Dakar)';
+        document.getElementById('map').parentNode.appendChild(infoMsg);
+        
+        setTimeout(() => {
+            if (infoMsg.parentNode) infoMsg.remove();
+        }, 5000);
+        
+        ajouterEvenementsMarqueur();
+    }
+}
+
+// 🔥 Fonction pour ajouter les événements du marqueur
+function ajouterEvenementsMarqueur() {
+    if (!marker) return;
+    
+    marker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        positionLivraison = [pos.lat, pos.lng];
+        console.log('📌 Nouvelle position:', positionLivraison);
+    });
+    
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        positionLivraison = [e.latlng.lat, e.latlng.lng];
+        console.log('📌 Nouvelle position (clic):', positionLivraison);
+    });
+}
+
+// Mettre à jour l'affichage des frais
+function mettreAJourFraisLivraison() {
+    const frais = calculerFrais(produitActuel.prix);
+    
+    const fraisAcheteurEl = document.getElementById('fraisAcheteur');
+    const fraisLivraisonEl = document.getElementById('fraisLivraison');
+    const totalEl = document.getElementById('totalAvecFrais');
+    
+    if (fraisAcheteurEl) fraisAcheteurEl.textContent = frais.fraisAcheteur.toLocaleString() + ' FCFA';
+    if (fraisLivraisonEl) fraisLivraisonEl.textContent = frais.livraison.toLocaleString() + ' FCFA';
+    if (totalEl) totalEl.textContent = frais.total.toLocaleString() + ' FCFA';
+}
+
+// ============================================
+// PAGE DÉTAIL ANNONCE - PARTIE MODIFIÉE
+// ============================================
+
+/*// 🔥 Ouvrir le modal d'achat avec prise en compte des commandes gratuites
+async function ouvrirAchatDetail() {
+    if (!UTILISATEUR_COURANT) {
+        window.location.href = `connexion.html?redirect=detail&id=${produitActuel.id}`;
+        return;
+    }
+
+    if (UTILISATEUR_COURANT === vendeurActuel?.id) {
+        alert("Vous ne pouvez pas acheter votre propre produit");
+        return;
+    }
+
+    const achatProductTitle = document.getElementById('achatProductTitle');
+    if (achatProductTitle) achatProductTitle.textContent = produitActuel.titre;
+    
+    const achatProductPrice = document.getElementById('achatProductPrice');
+    if (achatProductPrice) achatProductPrice.innerHTML = formatPrixDetail(produitActuel.prix);
+    
+    // 🔥 Vérifier les commandes gratuites
+    const commandesGratuites = await verifierCommandesGratuites();
+    
+    // 🔥 Supprimer l'ancien message s'il existe
+    const oldInfo = document.getElementById('fraisInfo');
+    if (oldInfo) oldInfo.remove();
+    
+    // 🔥 Ajouter un message d'information
+    const fraisInfo = document.createElement('div');
+    fraisInfo.id = 'fraisInfo';
+    
+    if (commandesGratuites > 0) {
+        fraisInfo.className = 'alert alert-success mb-3';
+        fraisInfo.innerHTML = `
+            <i class="fas fa-gift me-2"></i>
+            <strong>🎉 Félicitations !</strong> Cette commande est <strong>GRATUITE</strong> (frais offerts).<br>
+            <small>Il vous reste ${commandesGratuites} commande(s) gratuite(s).</small>
+        `;
+    } else {
+        fraisInfo.className = 'alert alert-info mb-3';
+        fraisInfo.innerHTML = `
+            <i class="fas fa-info-circle me-2"></i>
+            Les frais de protection et de livraison s'appliquent à cette commande.
+        `;
+    }
+    
+    const modalBody = document.querySelector('#achatModal .modal-body');
+    if (modalBody) {
+        modalBody.insertBefore(fraisInfo, modalBody.firstChild);
+    }
+    
+    // 🔥 Calculer les frais avec la nouvelle fonction
+    const frais = await calculerFraisAvecGratuit(produitActuel.prix);
+    
+    document.getElementById('prixArticle').textContent = formatPrixDetail(produitActuel.prix);
+    document.getElementById('fraisAcheteur').textContent = frais.gratuit ? '0 FCFA' : frais.fraisAcheteur.toLocaleString() + ' FCFA';
+    document.getElementById('fraisLivraison').textContent = frais.gratuit ? '0 FCFA' : frais.livraison.toLocaleString() + ' FCFA';
+    document.getElementById('totalAvecFrais').textContent = frais.total.toLocaleString() + ' FCFA';
+    
+    // 🔥 Ajouter un badge pour les commandes gratuites
+    const oldBadge = document.getElementById('gratuitBadge');
+    if (oldBadge) oldBadge.remove();
+    
+    if (frais.gratuit) {
+        const totalElement = document.getElementById('totalAvecFrais').parentNode;
+        const gratuitBadge = document.createElement('div');
+        gratuitBadge.id = 'gratuitBadge';
+        gratuitBadge.className = 'badge bg-success mt-2 p-2';
+        gratuitBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Commande gratuite (frais offerts)';
+        totalElement.appendChild(gratuitBadge);
+    }
+    
+    setTimeout(() => {
+        initialiserCarteLivraison();
+    }, 500);
+    
+    if (achatModal) achatModal.show();
+}*/
+
+
+// 🔥 Ouvrir le modal d'achat avec prise en compte des commandes gratuites
+/*async function ouvrirAchatDetail() {
+    if (!UTILISATEUR_COURANT) {
+        window.location.href = `connexion.html?redirect=detail&id=${produitActuel.id}`;
+        return;
+    }
+
+    if (UTILISATEUR_COURANT === vendeurActuel?.id) {
+        alert("Vous ne pouvez pas acheter votre propre produit");
+        return;
+    }
+
+    const achatProductTitle = document.getElementById('achatProductTitle');
+    if (achatProductTitle) achatProductTitle.textContent = produitActuel.titre;
+    
+    const achatProductPrice = document.getElementById('achatProductPrice');
+    if (achatProductPrice) achatProductPrice.innerHTML = formatPrixDetail(produitActuel.prix);
+    
+    // 🔥 Vérifier les commandes gratuites
+    const commandesGratuites = await verifierCommandesGratuites();
+    console.log('🎁 Commandes gratuites restantes:', commandesGratuites); // Debug
+    
+    // 🔥 Supprimer l'ancien message s'il existe
+    const oldInfo = document.getElementById('fraisInfo');
+    if (oldInfo) oldInfo.remove();
+    
+    // 🔥 Supprimer l'ancien badge s'il existe
+    const oldBadge = document.getElementById('gratuitBadge');
+    if (oldBadge) oldBadge.remove();
+    
+    // 🔥 Calculer les frais avec la nouvelle fonction
+    const frais = await calculerFraisAvecGratuit(produitActuel.prix);
+    console.log('💰 Frais calculés:', frais); // Debug
+    
+    // 🔥 Mettre à jour l'affichage des frais
+    document.getElementById('prixArticle').textContent = formatPrixDetail(produitActuel.prix);
+    document.getElementById('fraisAcheteur').textContent = frais.gratuit ? '0 FCFA' : frais.fraisAcheteur.toLocaleString() + ' FCFA';
+    document.getElementById('fraisLivraison').textContent = frais.gratuit ? '0 FCFA' : frais.livraison.toLocaleString() + ' FCFA';
+    document.getElementById('totalAvecFrais').textContent = frais.total.toLocaleString() + ' FCFA';
+    
+    // 🔥 Ajouter un message d'information
+    const modalBody = document.querySelector('#achatModal .modal-body');
+    if (modalBody) {
+        const fraisInfo = document.createElement('div');
+        fraisInfo.id = 'fraisInfo';
+        
+        if (frais.gratuit) {
+            fraisInfo.className = 'alert alert-success mb-3';
+            fraisInfo.innerHTML = `
+                <i class="fas fa-gift me-2"></i>
+                <strong>🎉 Félicitations !</strong> Cette commande est <strong>GRATUITE</strong> (frais offerts).<br>
+                <small>Il vous reste ${commandesGratuites} commande(s) gratuite(s).</small>
+            `;
+            
+            // 🔥 Ajouter un badge pour les commandes gratuites
+            const totalElement = document.getElementById('totalAvecFrais').parentNode;
+            const gratuitBadge = document.createElement('div');
+            gratuitBadge.id = 'gratuitBadge';
+            gratuitBadge.className = 'badge bg-success mt-2 p-2';
+            gratuitBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>Commande gratuite (frais offerts)';
+            totalElement.appendChild(gratuitBadge);
+        } else {
+            fraisInfo.className = 'alert alert-info mb-3';
+            fraisInfo.innerHTML = `
+                <i class="fas fa-info-circle me-2"></i>
+                Les frais de protection et de livraison s'appliquent à cette commande.
+            `;
+        }
+        
+        modalBody.insertBefore(fraisInfo, modalBody.firstChild);
+    }
+    
+    setTimeout(() => {
+        initialiserCarteLivraison();
+    }, 500);
+    
+    if (achatModal) achatModal.show();
+}*/
+
+
+
+// 🔥 Ouvrir le modal d'achat avec prise en compte des commandes gratuites
+async function ouvrirAchatDetail() {
+    if (!UTILISATEUR_COURANT) {
+        window.location.href = `connexion.html?redirect=detail&id=${produitActuel.id}`;
+        return;
+    }
+
+    if (UTILISATEUR_COURANT === vendeurActuel?.id) {
+        alert("Vous ne pouvez pas acheter votre propre produit");
+        return;
+    }
+
+    const achatProductTitle = document.getElementById('achatProductTitle');
+    if (achatProductTitle) achatProductTitle.textContent = produitActuel.titre;
+    
+    const achatProductPrice = document.getElementById('achatProductPrice');
+    if (achatProductPrice) achatProductPrice.innerHTML = formatPrixDetail(produitActuel.prix);
+    
+    // 🔥 Vérifier les commandes gratuites
+    const commandesGratuites = await verifierCommandesGratuites();
+    console.log('🎁 Commandes gratuites restantes:', commandesGratuites); // Debug
+    
+    // 🔥 Calculer les frais avec la nouvelle fonction
+    const frais = await calculerFraisAvecGratuit(produitActuel.prix);
+    console.log('💰 Frais calculés:', frais); // Debug
+    
+    // 🔥 Mettre à jour l'affichage des frais
+    document.getElementById('prixArticle').textContent = formatPrixDetail(produitActuel.prix);
+    document.getElementById('fraisAcheteur').textContent = frais.gratuit ? '0 FCFA' : frais.fraisAcheteur.toLocaleString() + ' FCFA';
+    document.getElementById('fraisLivraison').textContent = frais.gratuit ? '0 FCFA' : frais.livraison.toLocaleString() + ' FCFA';
+    document.getElementById('totalAvecFrais').textContent = frais.total.toLocaleString() + ' FCFA';
+    
+    // 🔥 Vider les conteneurs
+    const fraisInfoContainer = document.getElementById('fraisInfoContainer');
+    const gratuitBadgeContainer = document.getElementById('gratuitBadgeContainer');
+    
+    if (fraisInfoContainer) fraisInfoContainer.innerHTML = '';
+    if (gratuitBadgeContainer) gratuitBadgeContainer.innerHTML = '';
+    
+    // 🔥 Ajouter un message d'information dans le conteneur prévu
+    if (fraisInfoContainer) {
+        const fraisInfo = document.createElement('div');
+        fraisInfo.id = 'fraisInfo';
+        
+        if (frais.gratuit) {
+            fraisInfo.className = 'alert alert-success mb-3';
+            fraisInfo.innerHTML = `
+                <i class="fas fa-gift me-2"></i>
+                <strong>🎉 Félicitations !</strong> frais + livraison offerts.<br>
+                <small>Il vous reste ${commandesGratuites} commande(s) sans frais.</small>
+            `;
+        } else {
+            fraisInfo.className = 'alert alert-info mb-3';
+            fraisInfo.innerHTML = `
+                <i class="fas fa-info-circle me-2"></i>
+                Les frais de protection et de livraison s'appliquent à cette commande.
+            `;
+        }
+        
+        fraisInfoContainer.appendChild(fraisInfo);
+    }
+    
+    // 🔥 Ajouter un badge pour les commandes gratuites dans le conteneur prévu
+    if (frais.gratuit && gratuitBadgeContainer) {
+        const gratuitBadge = document.createElement('div');
+        gratuitBadge.id = 'gratuitBadge';
+        gratuitBadge.className = 'badge bg-success mt-2 p-2';
+        gratuitBadge.innerHTML = '<i class="fas fa-check-circle me-1"></i>frais + livraison offerts';
+        gratuitBadgeContainer.appendChild(gratuitBadge);
+    }
+    
+    setTimeout(() => {
+        initialiserCarteLivraison();
+    }, 500);
+    
+    if (achatModal) achatModal.show();
+}
+
+
+
+
+
+
+// 🔥 Confirmer l'achat (sans décrémentation manuelle)
+async function confirmerAchatDetail() {
+    if (!supabase1 || !UTILISATEUR_COURANT || !produitActuel || !vendeurActuel) return;
+    
+    if (!positionLivraison) {
+        alert('Veuillez sélectionner une position de livraison sur la carte');
+        return;
+    }
+    
+    try {
+        const { data: produit, error: checkError } = await supabase1
+            .from('produits')
+            .select('est_actif')
+            .eq('id', produitActuel.id)
+            .single();
+            
+        if (checkError) throw checkError;
+        
+        if (!produit.est_actif) {
+            alert('Ce produit n\'est plus disponible à la vente');
+            window.location.reload();
+            return;
+        }
+        
+        // 🔥 Vérifier les commandes gratuites pour le prix
+        const commandesGratuites = await verifierCommandesGratuites();
+        const frais = commandesGratuites > 0 
+            ? { total: produitActuel.prix }
+            : await calculerFraisAvecGratuit(produitActuel.prix);
+        
+        const codeUnique = genererCodeUniqueDetail();
+        
+        const commande = {
+            code_unique: codeUnique,
+            id_produit: produitActuel.id,
+            id_acheteur: UTILISATEUR_COURANT,
+            id_vendeur: vendeurActuel.id,
+            prix: frais.total,
+            latitude: positionLivraison[0],
+            longitude: positionLivraison[1],
+            telephone_client: userData?.telephone || '',
+            etat: 'en attente de livraison',
+            paiement_recu: false,
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase1
+            .from('commandes')
+            .insert([commande]);
+
+        if (error) throw error;
+
+        // 🔥 NE PAS décrémenter ici - le trigger SQL le fera automatiquement
+
+        if (achatModal) achatModal.hide();
+        
+        const messageGratuit = commandesGratuites > 0 
+            ? `🎉 Commande gratuite enregistrée !`
+            : '✅ Achat confirmé ! Votre commande a été enregistrée.';
+        
+        afficherMessageDetail(messageGratuit, 'success');
+        
+        setTimeout(() => {
+            window.location.href = `historique_commande.html?success=${codeUnique}`;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Erreur achat:', error);
+        afficherMessageDetail('❌ Erreur lors de l\'achat: ' + error.message, 'error');
+    }
+}
+
+// Afficher une erreur
+function afficherErreurDetail() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const errorState = document.getElementById('errorState');
+    
+    if (loadingIndicator) loadingIndicator.classList.add('d-none');
+    if (errorState) errorState.classList.remove('d-none');
+}
+
+// Afficher un message
+function afficherMessageDetail(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '1050';
+    alertDiv.style.minWidth = '300px';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) alertDiv.remove();
+    }, 5000);
+}
+
+// Formater le prix
+function formatPrixDetail(prix) {
+    if (!prix) return 'Prix non disponible';
+    return prix.toLocaleString('fr-FR') + ' FCFA';
+}
+
+// Générer un code unique
+function genererCodeUniqueDetail() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'CMD-';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    code += '-' + Date.now().toString().slice(-4);
+    return code;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*// ============================================
 // PAGE VENDRE - PUBLIER UN PRODUIT
 // ============================================
 
@@ -2546,7 +3715,810 @@ function setVendreLoading(loading) {
             btnSpinner.classList.add('d-none');
         }
     }
+}*/
+
+
+
+// ============================================
+// PAGE VENDRE - PUBLIER UN PRODUIT AVEC LOCALISATION
+// ============================================
+
+let vendreLoading = false;
+let imagesSelectionnees = [];
+let limiteProduits = 5;
+
+// 🔥 Variables pour la carte
+let mapVendre = null;
+let markerVendre = null;
+let positionVendre = null;
+
+// Initialiser la page vendre
+function initialiserPageVendre() {
+    console.log('💰 Initialisation page vendre...');
+    
+    verifierConnexionVendeur();
+    initialiserUploadImages();
+    verifierLimiteProduits();
+    
+    // 🔥 Initialiser la carte après un petit délai pour que le DOM soit prêt
+    setTimeout(() => {
+        initialiserCarteVendre();
+    }, 500);
+    
+    const form = document.getElementById('vendreForm');
+    if (form) {
+        form.addEventListener('submit', publierProduit);
+    }
 }
+
+// Vérifier que l'utilisateur est connecté et a le rôle vendeur
+async function verifierConnexionVendeur() {
+    // Attendre que l'auth soit initialisée
+    await attendreUtilisateur();
+    
+    const estConnecte = await verifierConnexion();
+    
+    if (!estConnecte) {
+        window.location.href = 'connexion.html?redirect=vendre';
+        return;
+    }
+    
+    // Vérifier le rôle vendeur
+    if (!userRoles || !userRoles.includes('vendeur')) {
+        alert("Vous devez avoir un compte vendeur pour accéder à cette page.");
+        window.location.href = 'index.html';
+    }
+}
+
+// Initialiser l'upload d'images
+function initialiserUploadImages() {
+    const addImageBtn = document.getElementById('addImageBtn');
+    const imageInput = document.getElementById('imageInput');
+    
+    if (addImageBtn && imageInput) {
+        addImageBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+        
+        imageInput.addEventListener('change', (e) => {
+            const fichiers = Array.from(e.target.files);
+            if (fichiers.length + imagesSelectionnees.length > 5) {
+                alert('Vous ne pouvez pas ajouter plus de 5 images au total.');
+                return;
+            }
+            
+            fichiers.forEach(fichier => {
+                if (fichier.size > 5 * 1024 * 1024) {
+                    alert(`L'image ${fichier.name} dépasse 5 Mo et ne sera pas ajoutée.`);
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imagesSelectionnees.push({
+                        file: fichier,
+                        preview: event.target.result
+                    });
+                    afficherPrevisualisations();
+                };
+                reader.readAsDataURL(fichier);
+            });
+        });
+    }
+}
+
+// Afficher les prévisualisations d'images
+function afficherPrevisualisations() {
+    const container = document.getElementById('imagePreviewContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    imagesSelectionnees.forEach((img, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-preview-wrapper';
+        
+        wrapper.innerHTML = `
+            <img src="${img.preview}" class="image-preview">
+            <div class="remove-image" onclick="supprimerImage(${index})">
+                <i class="fas fa-times"></i>
+            </div>
+        `;
+        
+        container.appendChild(wrapper);
+    });
+}
+
+// Supprimer une image
+function supprimerImage(index) {
+    imagesSelectionnees.splice(index, 1);
+    afficherPrevisualisations();
+}
+
+// Vérifier la limite de produits
+async function verifierLimiteProduits() {
+    // Attendre que l'utilisateur soit chargé
+    await attendreUtilisateur();
+    
+    if (!UTILISATEUR_COURANT || !supabase1) return;
+    
+    try {
+        const { count, error } = await supabase1
+            .from('produits')
+            .select('*', { count: 'exact', head: true })
+            .eq('vendeur_id', UTILISATEUR_COURANT);
+            
+        if (error) throw error;
+        
+        const countProduits = count || 0;
+        const limitInfo = document.getElementById('productCount');
+        const limitMessage = document.getElementById('productCountMessage');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (limitInfo) {
+            limitInfo.textContent = `${countProduits}/${limiteProduits}`;
+        }
+        
+        if (limitMessage) {
+            limitMessage.textContent = `Vous avez ${countProduits} produit(s) sur ${limiteProduits} maximum`;
+        }
+        
+        if (submitBtn && countProduits >= limiteProduits) {
+            submitBtn.disabled = true;
+            submitBtn.title = "Limite de produits atteinte (5 maximum)";
+        }
+        
+    } catch (error) {
+        console.error('Erreur vérification limite:', error);
+    }
+}
+
+// ============================================
+// 🔥 FONCTIONS DE GÉOLOCALISATION
+// ============================================
+
+/*// Initialiser la carte de localisation du produit
+function initialiserCarteVendre() {
+    console.log('🗺️ Initialisation carte vendre...');
+    
+    // Centre par défaut (Dakar)
+    const dakarCenter = [14.7167, -17.4677];
+    
+    // Vérifier si l'élément map existe
+    const mapElement = document.getElementById('mapVendre');
+    if (!mapElement) {
+        console.error('❌ Élément mapVendre non trouvé');
+        return;
+    }
+    
+    // Créer la carte
+    mapVendre = L.map('mapVendre').setView(dakarCenter, 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(mapVendre);
+    
+    // Limiter à la région de Dakar
+    const dakarBounds = L.latLngBounds(
+        L.latLng(14.6, -17.6),
+        L.latLng(14.8, -17.3)
+    );
+    mapVendre.setMaxBounds(dakarBounds);
+    mapVendre.on('drag', function() {
+        mapVendre.panInsideBounds(dakarBounds, { animate: false });
+    });
+    
+    // Essayer d'obtenir la position exacte de l'utilisateur
+    if (navigator.geolocation) {
+        console.log('📍 Recherche de la position...');
+        
+        // Afficher un indicateur de chargement
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'geoloc-loading';
+        loadingMsg.id = 'geoloc-vendre-loading';
+        loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Recherche de votre position...';
+        mapElement.parentNode.insertBefore(loadingMsg, mapElement);
+        
+        navigator.geolocation.getCurrentPosition(
+            // Succès
+            function(position) {
+                console.log('✅ Position trouvée');
+                
+                // Supprimer l'indicateur
+                const loadingEl = document.getElementById('geoloc-vendre-loading');
+                if (loadingEl) loadingEl.remove();
+                
+                const userPos = [position.coords.latitude, position.coords.longitude];
+                
+                // Vérifier si dans les limites
+                if (dakarBounds.contains(L.latLng(userPos[0], userPos[1]))) {
+                    positionVendre = userPos;
+                    mapVendre.setView(userPos, 15);
+                    
+                    markerVendre = L.marker(userPos, { draggable: true }).addTo(mapVendre);
+                    markerVendre.bindPopup('📦 Votre produit est ici<br>Déplacez-moi si besoin').openPopup();
+                    
+                    // Mettre à jour les champs
+                    document.getElementById('latitude').value = userPos[0].toFixed(6);
+                    document.getElementById('longitude').value = userPos[1].toFixed(6);
+                    
+                    // Afficher un message de succès
+                    afficherMessageLocalisation('success', 'Position trouvée ! Vous pouvez ajuster le marqueur si nécessaire.');
+                } else {
+                    console.log('⚠️ Position hors zone, utilisation de Dakar centre');
+                    utiliserPositionDefaut(dakarCenter);
+                    afficherMessageLocalisation('warning', 'Votre position est hors de la zone de livraison (Dakar). Le marqueur a été placé au centre de Dakar.');
+                }
+                
+                ajouterEvenementsMarqueurVendre(dakarBounds);
+            },
+            // Erreur
+            function(error) {
+                console.warn('⚠️ Erreur géolocalisation:', error.message);
+                
+                const loadingEl = document.getElementById('geoloc-vendre-loading');
+                if (loadingEl) loadingEl.remove();
+                
+                utiliserPositionDefaut(dakarCenter);
+                
+                let message = "Position par défaut (Dakar)";
+                if (error.code === 1) {
+                    message = "🌍 Position non partagée - Utilisation du centre de Dakar";
+                } else if (error.code === 2) {
+                    message = "📡 Position non disponible - Utilisation du centre de Dakar";
+                } else if (error.code === 3) {
+                    message = "⏱️ Délai dépassé - Utilisation du centre de Dakar";
+                }
+                
+                afficherMessageLocalisation('warning', message);
+                ajouterEvenementsMarqueurVendre(dakarBounds);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        console.log('⚠️ Géolocalisation non supportée');
+        utiliserPositionDefaut(dakarCenter);
+        afficherMessageLocalisation('warning', 'Géolocalisation non supportée - Position par défaut (Dakar)');
+        ajouterEvenementsMarqueurVendre(dakarBounds);
+    }
+}*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// ============================================
+// 🔥 FONCTIONS DE GÉOLOCALISATION
+// ============================================
+
+// Variable pour savoir si on a déjà demandé la localisation
+let geolocationDemandee = false;
+let geolocationEnCours = false;
+
+// Initialiser la carte de localisation du produit
+function initialiserCarteVendre() {
+    console.log('🗺️ Initialisation carte vendre...');
+    
+    // Centre par défaut (Dakar)
+    const dakarCenter = [14.7167, -17.4677];
+    
+    // Vérifier si l'élément map existe
+    const mapElement = document.getElementById('mapVendre');
+    if (!mapElement) {
+        console.error('❌ Élément mapVendre non trouvé');
+        return;
+    }
+    
+    // Créer la carte
+    mapVendre = L.map('mapVendre').setView(dakarCenter, 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(mapVendre);
+    
+    // Limiter à la région de Dakar
+    const dakarBounds = L.latLngBounds(
+        L.latLng(14.6, -17.6),
+        L.latLng(14.8, -17.3)
+    );
+    mapVendre.setMaxBounds(dakarBounds);
+    mapVendre.on('drag', function() {
+        mapVendre.panInsideBounds(dakarBounds, { animate: false });
+    });
+    
+    // 🔥 Vérifier si on a déjà une position sauvegardée
+    const positionSauvegardee = localStorage.getItem('userPosition');
+    
+    if (positionSauvegardee) {
+        // Utiliser la position sauvegardée
+        try {
+            const pos = JSON.parse(positionSauvegardee);
+            const userPos = [pos.lat, pos.lng];
+            
+            if (dakarBounds.contains(L.latLng(userPos[0], userPos[1]))) {
+                positionVendre = userPos;
+                mapVendre.setView(userPos, 15);
+                
+                markerVendre = L.marker(userPos, { draggable: true }).addTo(mapVendre);
+                markerVendre.bindPopup('📦 Votre produit est ici<br>Déplacez-moi si besoin').openPopup();
+                
+                document.getElementById('latitude').value = userPos[0].toFixed(6);
+                document.getElementById('longitude').value = userPos[1].toFixed(6);
+                
+                ajouterEvenementsMarqueurVendre(dakarBounds);
+                return;
+            }
+        } catch (e) {
+            console.warn('Erreur lecture position sauvegardée:', e);
+        }
+    }
+    
+    // 🔥 Si pas de position sauvegardée ET pas encore demandé
+    if (!geolocationDemandee && !geolocationEnCours) {
+        demanderLocalisationUneFois(dakarCenter, dakarBounds, mapElement);
+    } else {
+        // Position par défaut sans demander
+        utiliserPositionDefaut(dakarCenter);
+        ajouterEvenementsMarqueurVendre(dakarBounds);
+    }
+}
+
+// 🔥 Fonction pour demander la localisation UNE SEULE fois
+function demanderLocalisationUneFois(dakarCenter, dakarBounds, mapElement) {
+    if (geolocationDemandee || geolocationEnCours) return;
+    
+    geolocationEnCours = true;
+    
+    if (navigator.geolocation) {
+        console.log('📍 Demande de localisation...');
+        
+        // Afficher un indicateur de chargement
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'geoloc-loading';
+        loadingMsg.id = 'geoloc-vendre-loading';
+        loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Recherche de votre position...';
+        mapElement.parentNode.insertBefore(loadingMsg, mapElement);
+        
+        navigator.geolocation.getCurrentPosition(
+            // Succès
+            function(position) {
+                console.log('✅ Position trouvée');
+                geolocationEnCours = false;
+                geolocationDemandee = true;
+                
+                // Supprimer l'indicateur
+                const loadingEl = document.getElementById('geoloc-vendre-loading');
+                if (loadingEl) loadingEl.remove();
+                
+                const userPos = [position.coords.latitude, position.coords.longitude];
+                
+                // 🔥 Sauvegarder pour les prochaines visites
+                localStorage.setItem('userPosition', JSON.stringify({
+                    lat: userPos[0],
+                    lng: userPos[1],
+                    timestamp: Date.now()
+                }));
+                
+                // Vérifier si dans les limites
+                if (dakarBounds.contains(L.latLng(userPos[0], userPos[1]))) {
+                    positionVendre = userPos;
+                    mapVendre.setView(userPos, 15);
+                    
+                    if (markerVendre) markerVendre.remove();
+                    markerVendre = L.marker(userPos, { draggable: true }).addTo(mapVendre);
+                    markerVendre.bindPopup('📦 Votre produit est ici<br>Déplacez-moi si besoin').openPopup();
+                    
+                    document.getElementById('latitude').value = userPos[0].toFixed(6);
+                    document.getElementById('longitude').value = userPos[1].toFixed(6);
+                    
+                    afficherMessageLocalisation('success', 'Position trouvée ! Vous pouvez ajuster le marqueur si nécessaire.');
+                } else {
+                    console.log('⚠️ Position hors zone, utilisation de Dakar centre');
+                    utiliserPositionDefaut(dakarCenter);
+                    afficherMessageLocalisation('warning', 'Votre position est hors de la zone de livraison (Dakar). Le marqueur a été placé au centre de Dakar.');
+                }
+                
+                ajouterEvenementsMarqueurVendre(dakarBounds);
+            },
+            // Erreur
+            function(error) {
+                console.warn('⚠️ Erreur géolocalisation:', error.message);
+                geolocationEnCours = false;
+                geolocationDemandee = true; // 🔥 Marquer comme demandé même en erreur
+                
+                const loadingEl = document.getElementById('geoloc-vendre-loading');
+                if (loadingEl) loadingEl.remove();
+                
+                utiliserPositionDefaut(dakarCenter);
+                
+                let message = "Position par défaut (Dakar)";
+                if (error.code === 1) {
+                    message = "🌍 Position non partagée - Utilisation du centre de Dakar";
+                } else if (error.code === 2) {
+                    message = "📡 Position non disponible - Utilisation du centre de Dakar";
+                } else if (error.code === 3) {
+                    message = "⏱️ Délai dépassé - Utilisation du centre de Dakar";
+                }
+                
+                afficherMessageLocalisation('warning', message);
+                ajouterEvenementsMarqueurVendre(dakarBounds);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        console.log('⚠️ Géolocalisation non supportée');
+        geolocationEnCours = false;
+        geolocationDemandee = true;
+        
+        utiliserPositionDefaut(dakarCenter);
+        afficherMessageLocalisation('warning', 'Géolocalisation non supportée - Position par défaut (Dakar)');
+        ajouterEvenementsMarqueurVendre(dakarBounds);
+    }
+}
+
+// Utiliser la position par défaut
+function utiliserPositionDefaut(center) {
+    positionVendre = center;
+    
+    if (markerVendre) markerVendre.remove();
+    markerVendre = L.marker(center, { draggable: true }).addTo(mapVendre);
+    markerVendre.bindPopup('📦 Déplacez-moi pour positionner votre produit').openPopup();
+    
+    document.getElementById('latitude').value = center[0].toFixed(6);
+    document.getElementById('longitude').value = center[1].toFixed(6);
+}
+
+// Ajouter les événements du marqueur
+function ajouterEvenementsMarqueurVendre(bounds) {
+    if (!markerVendre) return;
+    
+    markerVendre.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        
+        // Vérifier les limites
+        if (bounds.contains(pos)) {
+            positionVendre = [pos.lat, pos.lng];
+            document.getElementById('latitude').value = pos.lat.toFixed(6);
+            document.getElementById('longitude').value = pos.lng.toFixed(6);
+        } else {
+            // Revenir dans les limites
+            const lat = Math.min(Math.max(pos.lat, 14.6), 14.8);
+            const lng = Math.min(Math.max(pos.lng, -17.6), -17.3);
+            markerVendre.setLatLng([lat, lng]);
+            positionVendre = [lat, lng];
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+            
+            afficherMessageLocalisation('warning', 'Le marqueur a été repositionné dans la zone de livraison (Dakar)');
+        }
+    });
+    
+    mapVendre.on('click', function(e) {
+        if (bounds.contains(e.latlng)) {
+            markerVendre.setLatLng(e.latlng);
+            positionVendre = [e.latlng.lat, e.latlng.lng];
+            document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+            document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+        } else {
+            afficherMessageLocalisation('warning', 'Veuillez choisir une position dans la zone de livraison (Dakar)');
+        }
+    });
+}
+
+// Recentrer sur la position de l'utilisateur
+function recentrerCarteVendre() {
+    if (navigator.geolocation) {
+        afficherMessageLocalisation('info', 'Recherche de votre position...');
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const userPos = [position.coords.latitude, position.coords.longitude];
+                mapVendre.setView(userPos, 15);
+                
+                if (markerVendre) {
+                    markerVendre.setLatLng(userPos);
+                } else {
+                    markerVendre = L.marker(userPos, { draggable: true }).addTo(mapVendre);
+                }
+                
+                positionVendre = userPos;
+                document.getElementById('latitude').value = userPos[0].toFixed(6);
+                document.getElementById('longitude').value = userPos[1].toFixed(6);
+                
+                // 🔥 Mettre à jour la position sauvegardée
+                localStorage.setItem('userPosition', JSON.stringify({
+                    lat: userPos[0],
+                    lng: userPos[1],
+                    timestamp: Date.now()
+                }));
+                
+                afficherMessageLocalisation('success', 'Position mise à jour !');
+            },
+            function(error) {
+                let message = "Impossible d'obtenir votre position";
+                if (error.code === 1) message = "Veuillez autoriser la géolocalisation";
+                else if (error.code === 2) message = "Position non disponible";
+                else if (error.code === 3) message = "Délai dépassé";
+                
+                afficherMessageLocalisation('danger', message);
+            }
+        );
+    } else {
+        afficherMessageLocalisation('danger', 'Géolocalisation non supportée');
+    }
+}
+
+// Afficher un message dans la zone de localisation
+function afficherMessageLocalisation(type, message) {
+    const messagesContainer = document.getElementById('localisationMessages');
+    if (!messagesContainer) return;
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-localisation`;
+    alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>${message}`;
+    
+    messagesContainer.innerHTML = '';
+    messagesContainer.appendChild(alertDiv);
+    
+    // Auto-suppression après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// 🔥 Optionnel : Effacer la position sauvegardée (pour test)
+function effacerPositionSauvegardee() {
+    localStorage.removeItem('userPosition');
+    console.log('🗑️ Position sauvegardée effacée');
+    window.location.reload();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Utiliser la position par défaut
+function utiliserPositionDefaut(center) {
+    positionVendre = center;
+    markerVendre = L.marker(center, { draggable: true }).addTo(mapVendre);
+    markerVendre.bindPopup('📦 Déplacez-moi pour positionner votre produit').openPopup();
+    
+    document.getElementById('latitude').value = center[0].toFixed(6);
+    document.getElementById('longitude').value = center[1].toFixed(6);
+}
+
+// Ajouter les événements du marqueur
+function ajouterEvenementsMarqueurVendre(bounds) {
+    if (!markerVendre) return;
+    
+    markerVendre.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        
+        // Vérifier les limites
+        if (bounds.contains(pos)) {
+            positionVendre = [pos.lat, pos.lng];
+            document.getElementById('latitude').value = pos.lat.toFixed(6);
+            document.getElementById('longitude').value = pos.lng.toFixed(6);
+        } else {
+            // Revenir dans les limites
+            const lat = Math.min(Math.max(pos.lat, 14.6), 14.8);
+            const lng = Math.min(Math.max(pos.lng, -17.6), -17.3);
+            markerVendre.setLatLng([lat, lng]);
+            positionVendre = [lat, lng];
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+            
+            afficherMessageLocalisation('warning', 'Le marqueur a été repositionné dans la zone de livraison (Dakar)');
+        }
+    });
+    
+    mapVendre.on('click', function(e) {
+        if (bounds.contains(e.latlng)) {
+            markerVendre.setLatLng(e.latlng);
+            positionVendre = [e.latlng.lat, e.latlng.lng];
+            document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+            document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+        } else {
+            afficherMessageLocalisation('warning', 'Veuillez choisir une position dans la zone de livraison (Dakar)');
+        }
+    });
+}
+
+// Recentrer sur la position de l'utilisateur
+function recentrerCarteVendre() {
+    if (navigator.geolocation) {
+        afficherMessageLocalisation('info', 'Recherche de votre position...');
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const userPos = [position.coords.latitude, position.coords.longitude];
+                mapVendre.setView(userPos, 15);
+                markerVendre.setLatLng(userPos);
+                positionVendre = userPos;
+                document.getElementById('latitude').value = userPos[0].toFixed(6);
+                document.getElementById('longitude').value = userPos[1].toFixed(6);
+                
+                afficherMessageLocalisation('success', 'Position mise à jour !');
+            },
+            function(error) {
+                let message = "Impossible d'obtenir votre position";
+                if (error.code === 1) message = "Veuillez autoriser la géolocalisation";
+                else if (error.code === 2) message = "Position non disponible";
+                else if (error.code === 3) message = "Délai dépassé";
+                
+                afficherMessageLocalisation('danger', message);
+            }
+        );
+    } else {
+        afficherMessageLocalisation('danger', 'Géolocalisation non supportée');
+    }
+}
+
+// Afficher un message dans la zone de localisation
+function afficherMessageLocalisation(type, message) {
+    const messagesContainer = document.getElementById('localisationMessages');
+    if (!messagesContainer) return;
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-localisation`;
+    alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>${message}`;
+    
+    messagesContainer.innerHTML = '';
+    messagesContainer.appendChild(alertDiv);
+    
+    // Auto-suppression après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// ============================================
+// PUBLIER LE PRODUIT AVEC LOCALISATION
+// ============================================
+
+// Publier un produit avec upload d'images compressées ET localisation
+async function publierProduit(e) {
+    e.preventDefault();
+    
+    if (vendreLoading) return;
+    
+    // Récupérer les valeurs
+    const titre = document.getElementById('titre')?.value.trim();
+    const categorie = document.getElementById('categorie')?.value;
+    const prix = parseFloat(document.getElementById('prix')?.value);
+    const etat = document.getElementById('etat')?.value;
+    const marque = document.getElementById('marque')?.value.trim();
+    const modele = document.getElementById('modele')?.value.trim();
+    const couleur = document.getElementById('couleur')?.value.trim();
+    const description = document.getElementById('description')?.value.trim();
+    
+    // 🔥 Récupérer la position
+    const latitude = positionVendre ? positionVendre[0] : null;
+    const longitude = positionVendre ? positionVendre[1] : null;
+    
+    // Validations
+    if (!titre || !categorie || !prix || !etat || !description) {
+        alert('Veuillez remplir tous les champs obligatoires.');
+        return;
+    }
+    
+    if (prix < 100) {
+        alert('Le prix minimum est de 100 FCFA.');
+        return;
+    }
+    
+    if (imagesSelectionnees.length === 0) {
+        alert('Veuillez ajouter au moins une photo.');
+        return;
+    }
+    
+    // 🔥 Vérifier la position (optionnel mais recommandé)
+    if (!latitude || !longitude) {
+        if (!confirm('Vous n\'avez pas sélectionné de position. Voulez-vous continuer sans localisation ?')) {
+            return;
+        }
+    }
+    
+    setVendreLoading(true);
+    
+    try {
+        // Uploader les images vers Supabase Storage
+        console.log('📤 Upload des images vers le bucket "photos"...');
+        const imageUrls = await uploaderPlusieursImages(imagesSelectionnees);
+        
+        if (imageUrls.length === 0) {
+            throw new Error('Aucune image n\'a pu être uploadée');
+        }
+        
+        console.log(`✅ ${imageUrls.length} images uploadées avec succès`);
+        
+        // 🔥 Créer le produit AVEC la position
+        const nouveauProduit = {
+            titre,
+            categorie,
+            prix,
+            etat,
+            marque: marque || null,
+            modele: modele || null,
+            couleur: couleur || null,
+            description,
+            image_url: imageUrls[0] || null,
+            images: imageUrls,
+            vendeur_id: UTILISATEUR_COURANT,
+            est_actif: true,
+            created_at: new Date().toISOString(),
+            latitude: latitude,    // 🔥 Nouveau champ
+            longitude: longitude   // 🔥 Nouveau champ
+        };
+        
+        console.log('📦 Publication du produit avec localisation:', { latitude, longitude });
+        
+        const { error } = await supabase1
+            .from('produits')
+            .insert([nouveauProduit]);
+            
+        if (error) throw error;
+        
+        alert('✅ Produit publié avec succès !');
+        window.location.href = 'mes-produits.html';
+        
+    } catch (error) {
+        console.error('❌ Erreur publication:', error);
+        alert('❌ Erreur lors de la publication: ' + error.message);
+    } finally {
+        setVendreLoading(false);
+    }
+}
+
+// Gérer l'état de chargement
+function setVendreLoading(loading) {
+    vendreLoading = loading;
+    const btn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('submitText');
+    const btnSpinner = document.getElementById('submitSpinner');
+    
+    if (btn && btnText && btnSpinner) {
+        btn.disabled = loading;
+        if (loading) {
+            btnText.classList.add('d-none');
+            btnSpinner.classList.remove('d-none');
+        } else {
+            btnText.classList.remove('d-none');
+            btnSpinner.classList.add('d-none');
+        }
+    }
+}
+
+// 🔥 Rendre la fonction accessible globalement
+window.recentrerCarteVendre = recentrerCarteVendre;
+window.supprimerImage = supprimerImage;
+
+
+
+
+
+
 
 // ============================================
 // PAGE MES PRODUITS
@@ -3094,7 +5066,6 @@ function afficherVentes() {
                 <div class="acheteur-info">
                     <strong><i class="fas fa-user me-2"></i>Acheteur:</strong>
                     <div>${vente.acheteur?.nom || 'Non renseigné'}</div>
-                    <div><small><i class="fas fa-phone me-1"></i>${vente.acheteur?.telephone || 'Téléphone non disponible'}</small></div>
                 </div>
                 
                 <div class="produit-info">
@@ -3131,7 +5102,7 @@ function afficherVentes() {
 }
 
 // Calculer les statistiques
-function calculerStatistiques() {
+/*function calculerStatistiques() {
     console.log('📊 Calcul des statistiques');
     
     const totalVentes = ventes.length;
@@ -3150,6 +5121,51 @@ function calculerStatistiques() {
     if (chiffreAffairesEl) chiffreAffairesEl.textContent = chiffreAffaires.toLocaleString() + ' FCFA';
     if (ventesEnCoursEl) ventesEnCoursEl.textContent = ventesEnCours;
     if (ventesLivreesEl) ventesLivreesEl.textContent = ventesLivrees;
+}*/
+
+
+// Calculer les statistiques
+function calculerStatistiques() {
+    console.log('📊 Calcul des statistiques');
+    
+    // 🔥 Filtrer UNIQUEMENT les ventes livrées
+    const ventesLivrees = ventes.filter(v => v.etat === 'livrée');
+    
+    // Total des ventes (toutes commandes confondues)
+    const totalToutesVentes = ventes.length;
+    
+    // 🔥 Chiffre d'affaires = somme des prix des ventes livrées UNIQUEMENT
+    const chiffreAffaires = ventesLivrees.reduce((sum, v) => {
+        // Utiliser le prix de la commande (ou du produit si disponible)
+        const prix = v.produit?.prix || 0;
+        return sum + prix;
+    }, 0);
+
+
+    
+    // Ventes en cours (tout sauf livrée et annulée)
+    const ventesEnCours = ventes.filter(v => v.etat !== 'livrée' && v.etat !== 'annulée').length;
+    
+    // Nombre de ventes livrées
+    const nombreVentesLivrees = ventesLivrees.length;
+
+    console.log('📈 Statistiques:', { 
+        totalToutesVentes, 
+        chiffreAffaires, 
+        ventesEnCours, 
+        nombreVentesLivrees 
+    });
+    
+    // Mettre à jour les éléments DOM
+    const totalVentesEl = document.getElementById('totalVentes');
+    const chiffreAffairesEl = document.getElementById('chiffreAffaires');
+    const ventesEnCoursEl = document.getElementById('ventesEnCours');
+    const ventesLivreesEl = document.getElementById('ventesLivrees');
+    
+    if (totalVentesEl) totalVentesEl.textContent = totalToutesVentes;
+    if (chiffreAffairesEl) chiffreAffairesEl.textContent = chiffreAffaires.toLocaleString() + ' FCFA';
+    if (ventesEnCoursEl) ventesEnCoursEl.textContent = ventesEnCours;
+    if (ventesLivreesEl) ventesLivreesEl.textContent = nombreVentesLivrees;
 }
 
 // Fonction pour annuler le timeout
@@ -3181,7 +5197,7 @@ function afficherMessageVentes(message, type) {
 }
 
 
-// ============================================
+/*// ============================================
 // PAGE HISTORIQUE DES COMMANDES - AVEC ANNULATION (ACHATS UNIQUEMENT)
 // ============================================
 
@@ -3672,9 +5688,502 @@ function afficherMessageHistorique(message, type) {
     setTimeout(() => {
         if (alertDiv.parentNode) alertDiv.remove();
     }, 3000);
-}
+}*/
+
+
+
+
+
+
 
 // ============================================
+// PAGE HISTORIQUE DES COMMANDES - AVEC ANNULATION UNIQUEMENT
+// ============================================
+
+let historiqueLoading = false;
+let commandes = [];
+let historiqueInitialized = false;
+let historiqueTimeout = null;
+
+// Initialiser la page historique
+async function initialiserPageHistorique() {
+    console.log('📜 Initialisation page historique...');
+    
+    // Initialiser le dropdown utilisateur
+    initialiserDropdownUtilisateur();
+    
+    // D'abord, attendre que l'utilisateur soit complètement chargé
+    console.log('⏳ Attente du chargement de l\'utilisateur...');
+    const estConnecte = await verifierConnexion();
+    
+    if (!estConnecte) {
+        console.log('❌ Utilisateur non connecté, redirection vers connexion');
+        window.location.href = 'connexion.html?redirect=historique';
+        return;
+    }
+    
+    console.log('✅ Utilisateur connecté, chargement des données...');
+    
+    // Charger les infos utilisateur et mettre à jour l'interface
+    await chargerInfosUtilisateur();
+    afficherUtilisateurConnecte();
+    
+    // Initialiser les événements
+    initialiserEvenementsHistorique();
+    
+    // Charger les commandes
+    await chargerCommandes();
+    
+    // Timeout de sécurité
+    historiqueTimeout = setTimeout(() => {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator && !loadingIndicator.classList.contains('d-none')) {
+            console.log('⏰ Timeout de chargement');
+            if (loadingIndicator) {
+                loadingIndicator.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <h4 class="text-danger">Erreur de chargement</h4>
+                        <p class="text-muted">Le chargement prend trop de temps. Veuillez réessayer.</p>
+                        <button class="btn btn-primary mt-3" onclick="location.reload()">
+                            <i class="fas fa-redo me-2"></i>Réessayer
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }, 15000);
+}
+
+// Fonction pour annuler le timeout
+function annulerTimeoutHistorique() {
+    if (historiqueTimeout) {
+        clearTimeout(historiqueTimeout);
+        historiqueTimeout = null;
+    }
+}
+
+// Initialiser les événements
+function initialiserEvenementsHistorique() {
+    if (!supabase1) return;
+    
+    // Écouter les changements d'authentification
+    supabase1.auth.onAuthStateChange(async (event, session) => {
+        console.log('🔄 Auth event historique:', event);
+        
+        if (event === 'SIGNED_IN' && session) {
+            console.log('🎉 Reconnexion détectée, mise à jour...');
+            UTILISATEUR_COURANT = session.user.id;
+            
+            if (!historiqueInitialized) {
+                historiqueInitialized = true;
+                annulerTimeoutHistorique();
+                await chargerInfosUtilisateur();
+                afficherUtilisateurConnecte();
+                await chargerCommandes();
+            }
+        } else if (event === 'SIGNED_OUT') {
+            console.log('🚪 Déconnexion détectée');
+            UTILISATEUR_COURANT = null;
+            window.location.href = 'connexion.html?redirect=historique';
+        }
+    });
+}
+
+// 🔥 Vérifier si une commande peut être annulée
+function peutAnnulerCommande(commande) {
+    // Une commande ne peut être annulée que si elle est en "en attente de livraison"
+    // et qu'elle n'est pas déjà annulée ou livrée
+    return commande.etat === 'en attente de livraison';
+}
+
+// 🔥 Obtenir le libellé de l'état
+function getEtatLibelle(etat) {
+    const etats = {
+        'en attente de livraison': 'En attente de livraison',
+        'en cours de livraison': 'En cours de livraison',
+        'livrée': 'Livrée',
+        'annulée': 'Annulée',
+        'préparée': 'Préparée'
+    };
+    return etats[etat] || etat;
+}
+
+// Charger les commandes depuis Supabase
+async function chargerCommandes() {
+    if (!UTILISATEUR_COURANT) {
+        console.error('❌ Utilisateur non connecté');
+        afficherMessageHistorique('Utilisateur non connecté', 'error');
+        return;
+    }
+    
+    if (!supabase1) {
+        console.error('❌ Supabase non initialisé');
+        afficherMessageHistorique('Erreur de connexion à la base de données', 'error');
+        return;
+    }
+
+    try {
+        console.log('📦 Chargement des commandes pour:', UTILISATEUR_COURANT);
+
+        // Récupérer les commandes où l'utilisateur est acheteur
+        const { data: commandesAcheteur, error: errorAcheteur } = await supabase1
+            .from('commandes')
+            .select(`
+                *,
+                produit:produits!id_produit(
+                    id,
+                    titre, 
+                    image_url,
+                    categorie,
+                    prix
+                ),
+                vendeur:utilisateurs!id_vendeur(
+                    id,
+                    nom, 
+                    email, 
+                    telephone
+                )
+            `)
+            .eq('id_acheteur', UTILISATEUR_COURANT)
+            .order('created_at', { ascending: false });
+
+        if (errorAcheteur) {
+            console.error('Erreur chargement commandes acheteur:', errorAcheteur);
+            throw errorAcheteur;
+        }
+
+        commandes = (commandesAcheteur || []).map(cmd => ({ 
+            ...cmd, 
+            role: 'acheteur',
+            autrePartie: cmd.vendeur 
+        }));
+
+        console.log(`✅ ${commandes.length} commandes d'achat chargées`);
+
+        // Masquer l'indicateur de chargement
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const emptyState = document.getElementById('emptyState');
+        const container = document.getElementById('commandesContainer');
+        
+        if (loadingIndicator) {
+            loadingIndicator.classList.add('d-none');
+        }
+
+        if (commandes.length === 0) {
+            if (emptyState) {
+                emptyState.classList.remove('d-none');
+                emptyState.innerHTML = `
+                    <i class="fas fa-shopping-bag fa-4x text-primary mb-3"></i>
+                    <h3 class="mb-3">Aucune commande trouvée</h3>
+                    <p class="text-muted mb-4">Vous n'avez pas encore passé de commandes.</p>
+                    <a href="annonces.html" class="btn btn-primary">
+                        <i class="fas fa-store me-2"></i>Découvrir des produits
+                    </a>
+                `;
+            }
+            if (container) container.classList.add('d-none');
+            console.log('📭 Aucune commande d\'achat trouvée pour cet utilisateur');
+        } else {
+            if (emptyState) emptyState.classList.add('d-none');
+            if (container) {
+                container.classList.remove('d-none');
+                afficherCommandes();
+            }
+        }
+
+        // Annuler le timeout car le chargement est terminé
+        annulerTimeoutHistorique();
+
+    } catch (error) {
+        console.error('❌ Erreur chargement commandes:', error);
+        afficherMessageHistorique('Erreur lors du chargement des commandes', 'error');
+        
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (loadingIndicator) loadingIndicator.classList.add('d-none');
+        if (emptyState) {
+            emptyState.classList.remove('d-none');
+            emptyState.innerHTML = `
+                <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                <h3 class="mb-3">Erreur de chargement</h3>
+                <p class="text-muted mb-4">Impossible de charger vos commandes</p>
+                <button class="btn btn-primary mt-2" onclick="location.reload()">
+                    <i class="fas fa-redo me-2"></i>Réessayer
+                </button>
+            `;
+        }
+        
+        annulerTimeoutHistorique();
+    }
+}
+
+// Afficher les commandes
+function afficherCommandes() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const emptyState = document.getElementById('emptyState');
+    const container = document.getElementById('commandesContainer');
+
+    if (loadingIndicator) loadingIndicator.classList.add('d-none');
+
+    if (commandes.length === 0) {
+        if (emptyState) emptyState.classList.remove('d-none');
+        if (container) container.classList.add('d-none');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('d-none');
+    if (container) {
+        container.classList.remove('d-none');
+        container.innerHTML = '';
+
+        commandes.forEach(commande => {
+            const commandeElement = creerElementCommande(commande);
+            container.appendChild(commandeElement);
+        });
+    }
+}
+
+// 🔥 Créer un élément de commande (version corrigée)
+function creerElementCommande(commande) {
+    const id = commande.id;
+    const card = document.createElement('div');
+    card.className = `commande-card ${commande.etat === 'annulée' ? 'border-danger' : ''}`;
+    card.dataset.commandeId = id;
+
+    // Formater la date
+    const date = new Date(commande.created_at);
+    const dateFormatee = date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    // Déterminer la classe de l'état
+    let etatClass = '';
+    let etatIcon = '';
+    let etatTexte = getEtatLibelle(commande.etat);
+    
+    switch(commande.etat) {
+        case 'livrée':
+            etatClass = 'etat-livree';
+            etatIcon = 'fa-check-circle';
+            break;
+        case 'annulée':
+            etatClass = 'etat-annulee';
+            etatIcon = 'fa-times-circle';
+            break;
+        case 'en cours de livraison':
+            etatClass = 'etat-cours';
+            etatIcon = 'fa-truck';
+            break;
+        case 'préparée':
+            etatClass = 'etat-livraison';
+            etatIcon = 'fa-box';
+            break;
+        default:
+            etatClass = 'etat-livraison';
+            etatIcon = 'fa-clock';
+    }
+
+    // Récupérer les informations du produit
+    const produit = commande.produit || {};
+    const imageUrl = produit.image_url || commande.imageUrl || 'image/default-product.jpg';
+    const titre = produit.titre || 'Produit inconnu';
+    
+    // Prix
+    const prix = commande.prix || 0;
+
+    // Informations sur le vendeur
+    const vendeur = commande.vendeur || {};
+
+    // 🔥 Vérifier si l'annulation est possible
+    const peutAnnuler = peutAnnulerCommande(commande);
+
+    // Construction du HTML
+    card.innerHTML = `
+        <div class="commande-header">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <div>
+                    <div class="date">
+                        <i class="fas fa-calendar-alt me-2"></i>${dateFormatee}
+                    </div>
+                    <div class="code mt-1">
+                        <i class="fas fa-qrcode me-2"></i>${commande.code_unique || 'N/A'}
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
+                        <i class="fas fa-shopping-bag me-1"></i>Achat
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="commande-body">
+            <!-- Produit -->
+            <div class="produit-item">
+                <img src="${imageUrl}" 
+                     alt="${titre}" 
+                     class="produit-image"
+                     onerror="this.src='image/default-product.jpg'">
+                <div class="produit-info">
+                    <div class="produit-nom">${titre}</div>
+                    <div class="produit-prix">${prix.toLocaleString()} FCFA</div>
+                    ${produit.categorie ? `
+                        <div class="small text-muted">
+                            <i class="fas fa-tag me-1"></i>${produit.categorie}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <!-- Informations sur le vendeur -->
+            ${vendeur && vendeur.nom ? `
+                <div class="coordonnees">
+                    <div class="mb-2">
+                        <i class="fas fa-store me-2"></i>
+                        <strong>Vendeur:</strong> ${vendeur.nom || 'Non renseigné'}
+                    </div>
+                    ${vendeur.telephone ? `
+                        <div class="mb-2">
+                            <i class="fas fa-phone me-2"></i>
+                            ${vendeur.telephone}
+                        </div>
+                    ` : ''}
+                </div>
+            ` : ''}
+            
+            <!-- Position de livraison -->
+            ${commande.latitude && commande.longitude ? `
+                <div class="info-livraison mt-2">
+                    <i class="fas fa-map-marker-alt text-primary"></i>
+                    Position de livraison: ${commande.latitude.toFixed(4)}, ${commande.longitude.toFixed(4)}
+                </div>
+            ` : ''}
+            
+            <!-- État et total -->
+            <div class="info-row">
+                <span class="badge-etat ${etatClass}">
+                    <i class="fas ${etatIcon} me-1"></i>
+                    ${etatTexte}
+                </span>
+                <span class="total-commande">
+                    ${prix.toLocaleString()} FCFA
+                </span>
+            </div>
+            
+            
+            <!-- 🔥 Bouton d'annulation (seulement si possible) -->
+            ${peutAnnuler ? `
+                <div class="mt-3 text-end">
+                    <button class="btn btn-warning" onclick="annulerCommande('${commande.id}')">
+                        <i class="fas fa-times me-2"></i>Annuler la commande
+                    </button>
+
+                </div>
+            ` : commande.etat === 'annulée' ? `
+                <div class="mt-3 text-end">
+                    <span class="text-danger">
+                        <i class="fas fa-ban me-1"></i>
+                        Commande annulée
+                    </span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    return card;
+}
+
+// 🔥 Annuler une commande
+async function annulerCommande(commandeId) {
+    if (!confirm("⚠️ Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.")) {
+        return;
+    }
+    
+    try {
+        // Récupérer la commande pour vérifier son état
+        const { data: commande, error: fetchError } = await supabase1
+            .from('commandes')
+            .select('etat')
+            .eq('id', commandeId)
+            .single();
+            
+        if (fetchError) throw fetchError;
+        
+        // Vérifier que la commande peut encore être annulée
+        if (!peutAnnulerCommande(commande)) {
+            alert('❌ Cette commande ne peut plus être annulée car elle a déjà un statut différent.');
+            chargerCommandes(); // Recharger pour mettre à jour
+            return;
+        }
+        
+        // Mettre à jour l'état de la commande
+        const { error } = await supabase1
+            .from('commandes')
+            .update({ 
+                etat: 'annulée',
+            })
+            .eq('id', commandeId);
+            
+        if (error) throw error;
+        
+        // Afficher un message de succès
+        afficherMessageHistorique('✅ Commande annulée avec succès', 'success');
+        
+        // Recharger les commandes pour mettre à jour l'affichage
+        await chargerCommandes();
+        
+    } catch (error) {
+        console.error('Erreur annulation:', error);
+        afficherMessageHistorique('❌ Erreur lors de l\'annulation', 'error');
+    }
+}
+
+// Afficher un message
+function afficherMessageHistorique(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '1050';
+    alertDiv.style.minWidth = '300px';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) alertDiv.remove();
+    }, 3000);
+}
+
+
+// Basculer la sélection d'une commande
+function toggleSelectionCommande(commandeId, cardElement) {
+    if (selectedCommandes.has(commandeId)) {
+        selectedCommandes.delete(commandeId);
+        cardElement.classList.remove('selected');
+        const checkbox = cardElement.querySelector('.checkbox-custom');
+        if (checkbox) checkbox.checked = false;
+    } else {
+        selectedCommandes.add(commandeId);
+        cardElement.classList.add('selected');
+        const checkbox = cardElement.querySelector('.checkbox-custom');
+        if (checkbox) checkbox.checked = true;
+    }
+
+    mettreAJourBoutonSuppression();
+}
+
+
+/*// ============================================
 // PAGE ANNONCES - FILTRES ET RECHERCHE
 // ============================================
 
@@ -4103,7 +6612,631 @@ function afficherMessageAnnonces(message, type) {
     setTimeout(() => {
         if (alertDiv.parentNode) alertDiv.remove();
     }, 3000);
+}*/
+
+
+
+
+
+
+
+// ============================================
+// PAGE ANNONCES - FILTRES ET RECHERCHE PERFORMANTE
+// ============================================
+
+let annoncesLoading = false;
+let produitsListe = [];
+let categoriesListe = [];
+let filtreActuel = 'toutes';
+let rechercheActuelle = '';
+let pageActuelle = 1;
+const produitsParPage = 12;
+
+// 🔥 Dictionnaire de synonymes intelligent
+const DICTIONNAIRE_SYNONYMES = {
+    // Véhicules
+    'voiture': ['voiture', 'véhicule', 'auto', 'automobile', '4x4', 'berline', 'citadine', 'suv'],
+    'moto': ['moto', 'motocyclette', 'scooter', 'cyclomoteur', 'vespa', 'motard'],
+    'velo': ['vélo', 'bicyclette', 'cycle', 'vtt', 'vélo de route', 'cyclisme'],
+    
+    // Électronique
+    'telephone': ['téléphone', 'smartphone', 'mobile', 'iphone', 'samsung', 'huawei', 'xiaomi', 'téléphonie'],
+    'ordinateur': ['ordinateur', 'pc', 'laptop', 'portable', 'mac', 'imac', 'macbook', 'ordinateur portable'],
+    'tablette': ['tablette', 'ipad', 'samsung tab', 'android tablet'],
+    'tv': ['tv', 'télévision', 'écran', 'téléviseur', 'led', 'lcd', 'oled', 'smart tv'],
+    'appareil photo': ['appareil photo', 'camera', 'canon', 'nikon', 'sony', 'reflex', 'hybride'],
+    
+    // Mode
+    'vetement': ['vêtement', 'habit', 'tenue', 'fringue', 'chemise', 'pantalon', 'robe', 'jupe', 'costume'],
+    'chaussure': ['chaussure', 'soulier', 'basket', 'tennis', 'botte', 'sandale', 'escarpin'],
+    'sac': ['sac', 'sac à main', 'sacoche', 'cartable', 'besace', 'maroquinerie'],
+    
+    // Maison
+    'meuble': ['meuble', 'mobilier', 'table', 'chaise', 'armoire', 'canapé', 'lit', 'bureau'],
+    'electromenager': ['électroménager', 'frigo', 'réfrigérateur', 'cuisinière', 'four', 'micro-ondes', 'lave-linge'],
+    'decoration': ['décoration', 'déco', 'accessoire', 'cadre', 'lampe', 'miroir', 'tapis'],
+    
+    // Loisirs
+    'jeu': ['jeu', 'jeux', 'console', 'playstation', 'xbox', 'nintendo', 'switch', 'ps5', 'ps4'],
+    'livre': ['livre', 'roman', 'manuel', 'bd', 'bande dessinée', 'manga', 'encyclopédie'],
+    'sport': ['sport', 'équipement sportif', 'musculation', 'fitness', 'vélo', 'football', 'basket'],
+    
+    // Bricolage
+    'outil': ['outil', 'bricolage', 'perceuse', 'marteau', 'tournevis', 'scie', 'établi'],
+    
+    // Puériculture
+    'bebe': ['bébé', 'puériculture', 'poussette', 'lit bébé', 'chaise haute', 'baby', 'enfant']
+};
+
+// 🔥 Cache des termes de recherche pour éviter les recalculs
+const cacheRecherche = new Map();
+
+// Initialiser la page annonces
+function initialiserPageAnnonces() {
+    console.log('📋 Initialisation page annonces...');
+    
+    initialiserEvenementsAnnonces();
+    initialiserRechercheTempsReel();
+    verifierConnexionAnnonces();
+    
+    // Timeout de sécurité
+    setTimeout(() => {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator && !loadingIndicator.classList.contains('d-none')) {
+            console.log('⏰ Timeout de chargement');
+            afficherErreurChargementAnnonces();
+        }
+    }, 10000);
 }
+
+// 🔥 Initialiser la recherche en temps réel
+function initialiserRechercheTempsReel() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+
+    let timeoutId = null;
+
+    searchInput.addEventListener('input', (e) => {
+        // Debounce : attendre que l'utilisateur arrête de taper
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            const valeur = e.target.value.trim();
+            if (valeur.length >= 2 || valeur.length === 0) {
+                console.log('🔍 Recherche en temps réel:', valeur);
+                rechercheActuelle = valeur;
+                pageActuelle = 1;
+                chargerProduitsAnnonces();
+            }
+        }, 300); // 300ms de délai
+    });
+}
+
+// Initialiser les événements
+function initialiserEvenementsAnnonces() {
+    // Recherche
+    const searchButton = document.getElementById('searchButton');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (searchButton) {
+        searchButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🔍 Recherche cliquée');
+            rechercheActuelle = searchInput.value.trim();
+            pageActuelle = 1;
+            chargerProduitsAnnonces();
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('🔍 Recherche par entrée');
+                rechercheActuelle = searchInput.value.trim();
+                pageActuelle = 1;
+                chargerProduitsAnnonces();
+            }
+        });
+    }
+
+    // Filtres par catégorie
+    const filterButtons = document.querySelectorAll('.filter-btn, .categorie-badge');
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filtre = btn.dataset.filter || btn.dataset.categorie;
+            if (filtre) {
+                filtreActuel = filtre;
+                pageActuelle = 1;
+                chargerProduitsAnnonces();
+            }
+        });
+    });
+}
+
+// 🔥 Générer les termes de recherche étendus
+function genererTermesRecherche(terme) {
+    if (!terme || terme.length < 2) return [terme];
+    
+    // Vérifier le cache
+    if (cacheRecherche.has(terme)) {
+        return cacheRecherche.get(terme);
+    }
+    
+    const termeLower = terme.toLowerCase();
+    let termes = [termeLower];
+    
+    // Ajouter les synonymes
+    for (const [motCle, synonymes] of Object.entries(DICTIONNAIRE_SYNONYMES)) {
+        if (termeLower.includes(motCle) || motCle.includes(termeLower)) {
+            termes = [...termes, ...synonymes];
+            break;
+        }
+        
+        // Vérifier si le terme correspond à un synonyme
+        for (const synonyme of synonymes) {
+            if (termeLower.includes(synonyme) || synonyme.includes(termeLower)) {
+                termes = [...termes, motCle, ...synonymes];
+                break;
+            }
+        }
+    }
+    
+    // Déduplication
+    termes = [...new Set(termes)];
+    
+    // Ajouter des variations (stemming simple)
+    const variations = [];
+    termes.forEach(t => {
+        variations.push(t); // terme original
+        variations.push(t + 's'); // pluriel
+        variations.push(t + 'e'); // féminin
+        variations.push(t + 'es'); // féminin pluriel
+        variations.push(t.replace(/s$/, '')); // sans s final
+        variations.push(t.replace(/e$/, '')); // sans e final
+    });
+    
+    // Nettoyer et dédupliquer
+    termes = [...new Set(variations.filter(t => t && t.length > 1))];
+    
+    // Mettre en cache
+    cacheRecherche.set(terme, termes);
+    
+    console.log(`🔍 Termes étendus pour "${terme}":`, termes);
+    return termes;
+}
+
+// 🔥 Construire la requête de recherche intelligente
+function construireRequeteRecherche(query, recherche) {
+    if (!recherche || recherche.trim() === '') return query;
+    
+    const termes = genererTermesRecherche(recherche);
+    
+    // Construire une requête OR complexe
+    let conditions = [];
+    
+    termes.forEach(terme => {
+        // Recherche dans titre, description et catégorie
+        conditions.push(`titre.ilike.%${terme}%`);
+        conditions.push(`description.ilike.%${terme}%`);
+        conditions.push(`categorie.ilike.%${terme}%`);
+        
+        // Recherche dans les mots-clés si le champ existe
+        // conditions.push(`mots_cles.cs.{${terme}}`); // Si vous avez un tableau de mots-clés
+    });
+    
+    // Supprimer les doublons
+    conditions = [...new Set(conditions)];
+    
+    // Appliquer la condition OR
+    if (conditions.length > 0) {
+        query = query.or(conditions.join(','));
+    }
+    
+    return query;
+}
+
+// Vérifier la connexion
+async function verifierConnexionAnnonces() {
+    await attendreUtilisateur();
+    
+    try {
+        const { data: { session }, error } = await supabase1.auth.getSession();
+        
+        if (error) throw error;
+        
+        if (session && session.user) {
+            UTILISATEUR_COURANT = session.user.id;
+            await chargerInfosUtilisateur();
+            afficherUtilisateurConnecte();
+        }
+        
+        await chargerCategoriesAnnonces();
+        await chargerProduitsAnnonces();
+        
+    } catch (error) {
+        console.error('Erreur vérification connexion:', error);
+        await chargerCategoriesAnnonces();
+        await chargerProduitsAnnonces();
+    }
+}
+
+// Charger les catégories disponibles
+async function chargerCategoriesAnnonces() {
+    if (!supabase1) return;
+    
+    try {
+        const { data, error } = await supabase1
+            .from('produits')
+            .select('categorie')
+            .order('categorie');
+
+        if (error) throw error;
+
+        const categoriesSet = new Set();
+        data.forEach(item => {
+            if (item.categorie) {
+                categoriesSet.add(item.categorie);
+            }
+        });
+
+        categoriesListe = Array.from(categoriesSet).sort();
+        afficherCategoriesAnnonces();
+
+    } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+    }
+}
+
+// Afficher les catégories
+function afficherCategoriesAnnonces() {
+    const container = document.getElementById('categoriesContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const toutesBtn = document.createElement('div');
+    toutesBtn.className = `categorie-badge ${filtreActuel === 'toutes' ? 'active' : ''}`;
+    toutesBtn.dataset.categorie = 'toutes';
+    toutesBtn.innerHTML = `
+        <i class="fas fa-th-large"></i>
+        Toutes
+    `;
+    
+    toutesBtn.addEventListener('click', () => {
+        document.querySelectorAll('.categorie-badge').forEach(b => 
+            b.classList.remove('active')
+        );
+        toutesBtn.classList.add('active');
+        filtreActuel = 'toutes';
+        pageActuelle = 1;
+        chargerProduitsAnnonces();
+    });
+    
+    container.appendChild(toutesBtn);
+
+    categoriesListe.forEach(categorie => {
+        const btn = document.createElement('div');
+        btn.className = `categorie-badge ${filtreActuel === categorie ? 'active' : ''}`;
+        btn.dataset.categorie = categorie;
+        btn.innerHTML = `
+            <i class="fas fa-tag"></i>
+            ${categorie}
+        `;
+        
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.categorie-badge').forEach(b => 
+                b.classList.remove('active')
+            );
+            btn.classList.add('active');
+            filtreActuel = categorie;
+            pageActuelle = 1;
+            chargerProduitsAnnonces();
+        });
+        
+        container.appendChild(btn);
+    });
+
+    const totalCategories = document.getElementById('totalCategories');
+    if (totalCategories) totalCategories.textContent = categoriesListe.length + 1;
+}
+
+// 🔥 Charger les produits avec recherche intelligente
+async function chargerProduitsAnnonces() {
+    if (annoncesLoading) {
+        console.log('⏳ Chargement déjà en cours...');
+        return;
+    }
+    
+    annoncesLoading = true;
+    
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const produitsContainer = document.getElementById('produitsContainer');
+    const emptyState = document.getElementById('emptyState');
+
+    if (loadingIndicator) loadingIndicator.classList.remove('d-none');
+    if (produitsContainer) produitsContainer.classList.add('d-none');
+    if (emptyState) emptyState.classList.add('d-none');
+
+    if (!supabase1) {
+        console.error('❌ Supabase non initialisé');
+        annoncesLoading = false;
+        return;
+    }
+
+    try {
+        console.log(`📦 Chargement produits - Filtre: ${filtreActuel}, Recherche: "${rechercheActuelle}"`);
+        
+        let query = supabase1
+            .from('produits')
+            .select(`
+                *,
+                vendeur:utilisateurs!vendeur_id(
+                    nom, 
+                    telephone, 
+                    email, 
+                    avatar, 
+                    note_moyenne
+                )
+            `, { count: 'exact' });
+
+        // Appliquer le filtre par catégorie
+        if (filtreActuel && filtreActuel !== 'toutes') {
+            query = query.eq('categorie', filtreActuel);
+        }
+
+        // 🔥 Appliquer la recherche intelligente
+        if (rechercheActuelle && rechercheActuelle.trim() !== '') {
+            query = construireRequeteRecherche(query, rechercheActuelle);
+        }
+
+        // Trier par pertinence et date
+        query = query.order('created_at', { ascending: false });
+
+        // Appliquer la pagination
+        const from = (pageActuelle - 1) * produitsParPage;
+        const to = from + produitsParPage - 1;
+        
+        console.log('🔍 Exécution de la requête...');
+        const { data, error, count } = await query.range(from, to);
+
+        if (error) {
+            console.error('❌ Erreur Supabase:', error);
+            throw error;
+        }
+
+        produitsListe = data || [];
+        const totalProduits = count || 0;
+
+        console.log(`📦 ${produitsListe.length} produits chargés sur ${totalProduits} total`);
+
+        const totalProduitsElement = document.getElementById('totalProduits');
+        if (totalProduitsElement) totalProduitsElement.textContent = totalProduits;
+
+        if (produitsListe.length === 0) {
+            afficherEtatVideAnnonces();
+        } else {
+            afficherProduitsAnnonces();
+            afficherPaginationAnnonces(totalProduits);
+        }
+
+    } catch (error) {
+        console.error('❌ Erreur chargement produits:', error);
+        afficherErreurChargementAnnonces(error.message);
+    } finally {
+        annoncesLoading = false;
+        if (loadingIndicator) loadingIndicator.classList.add('d-none');
+    }
+}
+
+// Afficher les produits
+function afficherProduitsAnnonces() {
+    const produitsContainer = document.getElementById('produitsContainer');
+    const produitsGrid = document.getElementById('produitsGrid');
+    
+    if (!produitsContainer || !produitsGrid) return;
+    
+    produitsContainer.classList.remove('d-none');
+    produitsGrid.innerHTML = '';
+
+    produitsListe.forEach(produit => {
+        const card = creerCarteProduitAnnonces(produit);
+        produitsGrid.appendChild(card);
+    });
+}
+
+// Créer une carte produit
+function creerCarteProduitAnnonces(produit) {
+    const col = document.createElement('div');
+    col.className = 'col-md-6 col-lg-4 col-xl-3';
+
+    const vendeur = produit.vendeur || {};
+    const initiales = vendeur.nom ? 
+        vendeur.nom.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 
+        'V';
+
+    col.innerHTML = `
+        <div class="produit-card" onclick="window.location.href='detail-annonce.html?id=${produit.id}'" style="cursor: pointer;">
+            <img src="${produit.image_url || 'image/default-product.jpg'}" 
+                 alt="${produit.titre || 'Produit'}" 
+                 class="produit-image"
+                 loading="lazy"
+                 onerror="this.src='image/default-product.jpg'">
+            <div class="produit-contenu">
+                <div class="produit-categorie">
+                    <i class="fas fa-tag me-1"></i>
+                    ${produit.categorie || 'Non catégorisé'}
+                </div>
+                <h3 class="produit-titre">${produit.titre || 'Sans titre'}</h3>
+                <p class="produit-description">${(produit.description || '').substring(0, 100)}${produit.description && produit.description.length > 100 ? '...' : ''}</p>
+                <div class="produit-prix">${produit.prix ? produit.prix.toLocaleString() + ' FCFA' : 'Prix non disponible'}</div>
+            </div>
+            <div class="produit-footer">
+                <div class="produit-vendeur">
+                    <div class="vendeur-avatar">${initiales}</div>
+                    <span class="vendeur-nom">${vendeur.nom || 'Vendeur'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return col;
+}
+
+// Afficher l'état vide
+function afficherEtatVideAnnonces() {
+    const produitsContainer = document.getElementById('produitsContainer');
+    const emptyState = document.getElementById('emptyState');
+    const emptyMessage = document.getElementById('emptyStateMessage');
+    const emptySuggestion = document.getElementById('emptyStateSuggestion');
+
+    if (produitsContainer) produitsContainer.classList.add('d-none');
+    if (emptyState) emptyState.classList.remove('d-none');
+
+    if (emptyMessage) {
+        if (rechercheActuelle) {
+            emptyMessage.textContent = `Aucun produit ne correspond à "${rechercheActuelle}"`;
+            if (emptySuggestion) {
+                emptySuggestion.innerHTML = `
+                    Suggestions :
+                    <ul class="mt-2">
+                        <li>Vérifiez l'orthographe</li>
+                        <li>Utilisez des termes plus génériques</li>
+                        <li>Essayez "voiture" au lieu de "4x4"</li>
+                    </ul>
+                `;
+            }
+        } else if (filtreActuel !== 'toutes') {
+            emptyMessage.textContent = `Aucun produit dans la catégorie "${filtreActuel}"`;
+        } else {
+            emptyMessage.textContent = 'Aucun produit disponible pour le moment';
+        }
+    }
+}
+
+// Afficher la pagination
+function afficherPaginationAnnonces(total) {
+    const totalPages = Math.ceil(total / produitsParPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    const pagination = document.getElementById('pagination');
+    
+    if (!paginationContainer || !pagination) return;
+    
+    if (totalPages <= 1) {
+        paginationContainer.classList.add('d-none');
+        return;
+    }
+
+    paginationContainer.classList.remove('d-none');
+    pagination.innerHTML = '';
+
+    pagination.innerHTML += `
+        <li class="page-item ${pageActuelle === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changerPageAnnonces(${pageActuelle - 1}); return false;">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+    `;
+
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= pageActuelle - 2 && i <= pageActuelle + 2)) {
+            pagination.innerHTML += `
+                <li class="page-item ${i === pageActuelle ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changerPageAnnonces(${i}); return false;">${i}</a>
+                </li>
+            `;
+        } else if (i === pageActuelle - 3 || i === pageActuelle + 3) {
+            pagination.innerHTML += `
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `;
+        }
+    }
+
+    pagination.innerHTML += `
+        <li class="page-item ${pageActuelle === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changerPageAnnonces(${pageActuelle + 1}); return false;">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+}
+
+function changerPageAnnonces(page) {
+    pageActuelle = page;
+    chargerProduitsAnnonces();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetFiltresAnnonces() {
+    filtreActuel = 'toutes';
+    rechercheActuelle = '';
+    pageActuelle = 1;
+    
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    
+    chargerCategoriesAnnonces();
+    chargerProduitsAnnonces();
+}
+
+function afficherErreurChargementAnnonces(message) {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h4 class="text-danger">Erreur de chargement</h4>
+                <p class="text-muted">${message || 'Impossible de charger les annonces'}</p>
+                <button class="btn btn-primary mt-3" onclick="location.reload()">
+                    <i class="fas fa-redo me-2"></i>Réessayer
+                </button>
+            </div>
+        `;
+    }
+}
+
+function afficherMessageAnnonces(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '1050';
+    alertDiv.style.minWidth = '300px';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) alertDiv.remove();
+    }, 3000);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // ============================================

@@ -146,6 +146,7 @@
             line-height: 1.6;
             margin-bottom: 25px;
             white-space: pre-line;
+            word-wrap: break-word;
         }
         
         /* Vendeur card */
@@ -404,6 +405,31 @@
             color: var(--primary-blue);
         }
         
+        /* 🔥 Style pour le message de commande gratuite */
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .badge-gratuit {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .badge-gratuit i {
+            margin-right: 5px;
+        }
+        
         .map-container {
             height: 300px;
             width: 100%;
@@ -536,13 +562,40 @@
             justify-content: center;
         }
 
-        .product-description {
-            color: var(--text-color);
-            line-height: 1.6;
-            margin-bottom: 25px;
-            white-space: pre-line;  /* Ajoutez cette ligne */
-            word-wrap: break-word;   /* Et celle-ci pour les mots longs */
-        }
+
+
+
+
+
+        /* Dans votre section <style>, ajoutez : */
+#geoloc-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    font-weight: 500;
+}
+
+.map-container {
+    position: relative;
+}
+
+
+
+
+
+
+
+
+
+
+
+
     </style>
 </head>
 <body>
@@ -670,6 +723,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- 🔥 Conteneur pour le message de commande gratuite (sera injecté par JS) -->
+                    <div id="fraisInfoContainer"></div>
+                    
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="mb-3">Récapitulatif</h6>
@@ -692,6 +748,9 @@
                                 </div>
                             </div>
                             
+                            <!-- 🔥 Conteneur pour le badge de commande gratuite -->
+                            <div id="gratuitBadgeContainer"></div>
+                            
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
                                 Nos frais de protection acheteur servent à garantir que votre argent est sécurisé et que vous serez remboursé si l’article n’arrive pas ou ne correspond pas à la description. Le prix de l'article est quant à lui fixé par le vendeur.
@@ -712,7 +771,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>Annuler
                     </button>
-                    <button type="button" class="btn btn-success" onclick="confirmerAchat()">
+                    <button type="button" class="btn btn-success" onclick="confirmerAchatDetail()">
                         <i class="fas fa-check me-2"></i>Confirmer l'achat
                     </button>
                 </div>
