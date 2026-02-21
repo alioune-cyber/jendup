@@ -30,6 +30,7 @@ if (typeof window.__SUPABASE_INSTANCE === 'undefined') {
             const SUPABASE_URL = 'https://kkgguofgpzdlgtbzvnzn.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZ2d1b2ZncHpkbGd0Ynp2bnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5OTI3MTgsImV4cCI6MjA4NjU2ODcxOH0.4BP8UbxgRa3ZSueS9XBNpx3JEG9yz7Un97RnoHh1Ksc';
             
+            
             window.__SUPABASE_INSTANCE = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('✅ Supabase initialisé avec succès');
         } catch (error) {
@@ -552,6 +553,155 @@ if (supabase1) {
     });
 }
 
+
+
+// ============================================
+// COMPTEUR DE COMMANDES EN ATTENTE DE LIVRAISON
+// ============================================
+
+let commandesEnAttente = 0;
+let verificationInterval = null;
+
+// Initialiser le compteur de commandes en attente
+function initialiserCompteurCommandes() {
+    console.log('🔢 Initialisation du compteur de commandes en attente...');
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!UTILISATEUR_COURANT) {
+        console.log('👤 Utilisateur non connecté, pas de compteur');
+        return;
+    }
+    
+    // Vérifier immédiatement
+    verifierCommandesEnAttente();
+    
+    // Vérifier toutes les 30 secondes
+    if (verificationInterval) {
+        clearInterval(verificationInterval);
+    }
+    verificationInterval = setInterval(verifierCommandesEnAttente, 30000);
+    
+    // Ajouter un écouteur pour la visibilité de la page
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && UTILISATEUR_COURANT) {
+            console.log('👁️ Page visible, vérification des commandes...');
+            verifierCommandesEnAttente();
+        }
+    });
+    
+    // Écouter les changements d'authentification
+    if (supabase1) {
+        supabase1.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                console.log('🔢 Connexion détectée, activation compteur');
+                UTILISATEUR_COURANT = session.user.id;
+                verifierCommandesEnAttente();
+                
+                if (!verificationInterval) {
+                    verificationInterval = setInterval(verifierCommandesEnAttente, 30000);
+                }
+            } else if (event === 'SIGNED_OUT') {
+                console.log('🔢 Déconnexion détectée, désactivation compteur');
+                cacherCompteur();
+                if (verificationInterval) {
+                    clearInterval(verificationInterval);
+                    verificationInterval = null;
+                }
+            }
+        });
+    }
+}
+
+// Vérifier les commandes en attente de livraison
+async function verifierCommandesEnAttente() {
+    if (!UTILISATEUR_COURANT || !supabase1) return;
+    
+    try {
+        console.log('🔍 Vérification des commandes en attente...');
+        
+        // 🔥 Compter UNIQUEMENT les commandes en attente de livraison
+        const { count, error } = await supabase1
+            .from('commandes')
+            .select('*', { count: 'exact', head: true })
+            .eq('id_vendeur', UTILISATEUR_COURANT)
+            .eq('etat', 'en attente de livraison'); // Seulement en attente de livraison
+        
+        if (error) {
+            console.error('❌ Erreur vérification commandes:', error);
+            return;
+        }
+        
+        const nouveauCompte = count || 0;
+        
+        if (nouveauCompte !== commandesEnAttente) {
+            console.log(`📦 Commandes en attente: ${nouveauCompte}`);
+            commandesEnAttente = nouveauCompte;
+            mettreAJourCompteur();
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la vérification des commandes:', error);
+    }
+}
+
+// Mettre à jour l'affichage du compteur
+function mettreAJourCompteur() {
+    const compteur = document.getElementById('commandes-en-attente');
+    if (!compteur) return;
+    
+    if (commandesEnAttente > 0) {
+        compteur.textContent = commandesEnAttente > 99 ? '99+' : commandesEnAttente;
+        compteur.style.display = 'inline';
+        
+        // Optionnel : Animation quand le nombre change
+        compteur.style.animation = 'none';
+        compteur.offsetHeight; // Force reflow
+        compteur.style.animation = 'compteur-pulse 0.5s ease';
+    } else {
+        compteur.style.display = 'none';
+    }
+}
+
+// Cacher le compteur
+function cacherCompteur() {
+    commandesEnAttente = 0;
+    mettreAJourCompteur();
+}
+
+// Animation CSS pour le compteur
+const styleCompteur = document.createElement('style');
+styleCompteur.textContent = `
+@keyframes compteur-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+`;
+document.head.appendChild(styleCompteur);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ============================================
 // INITIALISATION DE LA PAGE D'ACCUEIL
 // ============================================
@@ -569,6 +719,10 @@ async function initialiserPageAccueil() {
     if (estConnecte) {
         await chargerInfosUtilisateur();
         afficherUtilisateurConnecte();
+
+        initialiserCompteurCommandes();
+
+        initialiserCompteurVentes();
     }
     
     // Charger les annonces (même sans connexion)
@@ -875,7 +1029,7 @@ function afficherModalResetPassword() {
     }
 }
 
-// Envoyer l'email de réinitialisation
+/*// Envoyer l'email de réinitialisation
 async function envoyerResetPassword() {
     if (!supabase1) return;
     
@@ -924,9 +1078,70 @@ async function envoyerResetPassword() {
         if (resetText) resetText.classList.remove('d-none');
         if (resetSpinner) resetSpinner.classList.add('d-none');
     }
+}*/
+
+
+
+// ✅ Utilise le système natif Supabase — pas de table custom, pas de Resend
+async function envoyerResetPassword() {
+    if (!supabase1) return;
+
+    const resetEmailInput = document.getElementById('reset-email');
+    const btnSendReset    = document.getElementById('btn-send-reset');
+    const resetText       = document.getElementById('reset-text');
+    const resetSpinner    = document.getElementById('reset-spinner');
+    if (!resetEmailInput) return;
+
+    const email = resetEmailInput.value.trim();
+    if (!email || !validerEmail(email)) {
+        afficherAlerte('Veuillez saisir une adresse email valide.', 'danger');
+        return;
+    }
+
+    if (btnSendReset)  btnSendReset.disabled = true;
+    if (resetText)     resetText.classList.add('d-none');
+    if (resetSpinner)  resetSpinner.classList.remove('d-none');
+
+    try {
+        console.log('📧 Envoi du lien de réinitialisation pour:', email);
+
+        // ✅ Supabase envoie lui-même l'email avec un lien sécurisé
+        // Le token_hash sera présent dans l'URL de redirection
+        const { error } = await supabase1.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password.html`,
+        });
+
+        if (error) throw error;
+
+        console.log('✅ Email de réinitialisation envoyé');
+        localStorage.setItem('remembered_email', email);
+
+        // Passer à l'étape de confirmation
+        resetStep = 2;
+        mettreAJourModalReset();
+
+    } catch (error) {
+        console.error('❌ Erreur reset:', error);
+
+        let msg = "Erreur lors de l'envoi de l'email";
+        if (error.message.includes('rate limit')) {
+            msg = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
+        } else if (error.message) {
+            msg = error.message;
+        }
+        afficherAlerte(msg, 'danger');
+
+        if (btnSendReset)  btnSendReset.disabled = false;
+        if (resetText)     resetText.classList.remove('d-none');
+        if (resetSpinner)  resetSpinner.classList.add('d-none');
+    }
 }
 
-// Valider le format d'email
+
+
+
+
+/*// Valider le format d'email
 function validerEmail(email) {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
@@ -950,9 +1165,35 @@ function setConnexionLoading(loading) {
         loginText.classList.remove('d-none');
         loginSpinner.classList.add('d-none');
     }
+}*/
+
+
+
+
+function validerEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Afficher une alerte
+function setConnexionLoading(loading) {
+    connexionLoading = loading;
+    const btnLogin     = document.getElementById('btn-login');
+    const loginText    = document.getElementById('login-text');
+    const loginSpinner = document.getElementById('login-spinner');
+    if (!btnLogin || !loginText || !loginSpinner) return;
+    btnLogin.disabled = loading;
+    if (loading) {
+        loginText.classList.add('d-none');
+        loginSpinner.classList.remove('d-none');
+    } else {
+        loginText.classList.remove('d-none');
+        loginSpinner.classList.add('d-none');
+    }
+}
+
+
+
+
+/*// Afficher une alerte
 function afficherAlerte(message, type) {
     // Chercher un conteneur d'alerte existant
     let alertContainer = document.getElementById('alert-container');
@@ -984,9 +1225,37 @@ function afficherAlerte(message, type) {
             alert.remove();
         }
     }, 5000);
+}*/
+
+
+
+
+function afficherAlerte(message, type) {
+    let alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'alert-container';
+        Object.assign(alertContainer.style, { position: 'fixed', top: '20px', right: '20px', zIndex: '9999' });
+        document.body.appendChild(alertContainer);
+    }
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show shadow`;
+    alert.innerHTML = `${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>`;
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+    setTimeout(() => { if (alert.parentNode) alert.remove(); }, 5000);
 }
 
-// Vérifier si l'utilisateur est déjà connecté
+
+
+
+
+
+
+
+
+/*// Vérifier si l'utilisateur est déjà connecté
 async function verifierConnexionExistante() {
     if (!supabase1) return;
     
@@ -995,6 +1264,20 @@ async function verifierConnexionExistante() {
         
         if (session && session.user) {
             console.log('👤 Utilisateur déjà connecté, redirection vers l\'accueil');
+            window.location.href = 'home.html?session=active';
+        }
+    } catch (error) {
+        console.warn('Erreur vérification session existante:', error);
+    }
+}*/
+
+
+async function verifierConnexionExistante() {
+    if (!supabase1) return;
+    try {
+        const { data: { session } } = await supabase1.auth.getSession();
+        if (session?.user) {
+            console.log("👤 Utilisateur déjà connecté, redirection...");
             window.location.href = 'home.html?session=active';
         }
     } catch (error) {
@@ -1012,8 +1295,9 @@ async function verifierConnexionExistante() {
 // Variables supplémentaires pour la réinitialisation
 let resetStep = 1; // 1 = formulaire email, 2 = confirmation
 
+
 // Remplacer la fonction afficherModalResetPassword existante par celle-ci
-function afficherModalResetPassword() {
+/*function afficherModalResetPassword() {
     const emailInput = document.getElementById('email');
     const resetEmail = document.getElementById('reset-email');
     const modalBody = document.querySelector('#resetPasswordModal .modal-body');
@@ -1030,9 +1314,9 @@ function afficherModalResetPassword() {
     if (resetPasswordModal) {
         resetPasswordModal.show();
     }
-}
+}*/
 
-// Nouvelle fonction pour mettre à jour l'affichage du modal
+/*// Nouvelle fonction pour mettre à jour l'affichage du modal
 function mettreAJourModalReset() {
     const modalBody = document.querySelector('#resetPasswordModal .modal-body');
     const modalFooter = document.querySelector('#resetPasswordModal .modal-footer');
@@ -1105,7 +1389,85 @@ function mettreAJourModalReset() {
             </button>
         `;
     }
+}*/
+
+
+
+function afficherModalResetPassword() {
+    resetStep = 1;
+    mettreAJourModalReset();
+    if (resetPasswordModal) resetPasswordModal.show();
 }
+
+function mettreAJourModalReset() {
+    const modalBody   = document.querySelector('#resetPasswordModal .modal-body');
+    const modalFooter = document.querySelector('#resetPasswordModal .modal-footer');
+    if (!modalBody || !modalFooter) return;
+
+    if (resetStep === 1) {
+        const emailPrefill = document.getElementById('email')?.value || '';
+
+        modalBody.innerHTML = `
+            <p class="text-muted small mb-3">
+                Saisissez votre adresse email pour recevoir un lien de réinitialisation.
+            </p>
+            <div class="mb-3">
+                <label for="reset-email" class="form-label">Adresse email</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="reset-email"
+                           placeholder="votre@email.com" autocomplete="email"
+                           value="${emailPrefill}">
+                </div>
+            </div>`;
+
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="fa fa-times me-1"></i> Annuler
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-send-reset">
+                <span id="reset-text"><i class="fa fa-paper-plane me-1"></i> Envoyer</span>
+                <span id="reset-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>`;
+
+        // Entrée dans le champ → soumettre
+        document.getElementById('reset-email')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') envoyerResetPassword();
+        });
+        document.getElementById('btn-send-reset')?.addEventListener('click', envoyerResetPassword);
+
+    } else {
+        // Étape 2 : confirmation
+        const email = document.getElementById('reset-email')?.value || '';
+        modalBody.innerHTML = `
+            <div class="text-center">
+                <div style="font-size:4rem;color:#28a745;margin-bottom:15px;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h5 class="mb-3">Email envoyé !</h5>
+                <p class="text-muted mb-2">Un lien de réinitialisation a été envoyé à :</p>
+                <div style="background:#e8f0fe;padding:12px;border-radius:8px;font-weight:600;
+                            color:#4361ee;word-break:break-all;margin:15px 0;">
+                    ${email}
+                </div>
+                <p class="small text-muted mt-3">
+                    <i class="fas fa-clock me-1"></i>
+                    Le lien expire dans 1 heure. Vérifiez vos spams si vous ne le trouvez pas.
+                </p>
+            </div>`;
+
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                <i class="fa fa-check me-1"></i> Fermer
+            </button>`;
+    }
+}
+
+
+
+
+
+
 
 // Remplacer la fonction envoyerResetPassword existante par celle-ci (améliorée)
 async function envoyerResetPassword() {
@@ -1166,6 +1528,486 @@ async function envoyerResetPassword() {
         if (resetSpinner) resetSpinner.classList.add('d-none');
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+/*// ============================================
+// PAGE CONNEXION
+// ============================================
+
+let resetPasswordModal = null;
+let connexionLoading   = false;
+let resetStep          = 1;
+
+function initialiserPageConnexion() {
+    console.log('🔑 Initialisation page de connexion...');
+    initialiserEvenementsConnexion();
+    activerValidationFormulaire();
+    chargerEmailMemoire();
+    verifierConnexionExistante();
+
+    const modalElement = document.getElementById('resetPasswordModal');
+    if (modalElement && typeof bootstrap !== 'undefined') {
+        resetPasswordModal = new bootstrap.Modal(modalElement);
+    }
+}
+
+function initialiserEvenementsConnexion() {
+    // Toggle mot de passe
+    const togglePassword = document.getElementById('toggle-password');
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    }
+
+    // Formulaire de connexion
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            connexion();
+        });
+    }
+
+    // Lien "mot de passe oublié"
+    const forgotPassword = document.getElementById('forgot-password');
+    if (forgotPassword) {
+        forgotPassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            afficherModalResetPassword();
+        });
+    }
+
+    // Mémoriser l'email
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('blur', function() {
+            if (this.value.trim()) localStorage.setItem('remembered_email', this.value.trim());
+        });
+    }
+}
+
+function chargerEmailMemoire() {
+    const rememberedEmail = localStorage.getItem('remembered_email');
+    if (rememberedEmail) {
+        const emailInput = document.getElementById('email');
+        if (emailInput) {
+            emailInput.value = rememberedEmail;
+            emailInput.dispatchEvent(new Event('input'));
+        }
+    }
+}
+
+function activerValidationFormulaire() {
+    const emailInput    = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const btnLogin      = document.getElementById('btn-login');
+    if (!emailInput || !passwordInput || !btnLogin) return;
+
+    const check = () => {
+        btnLogin.disabled = !emailInput.value.trim() || !passwordInput.value.trim();
+    };
+    emailInput.addEventListener('input', check);
+    passwordInput.addEventListener('input', check);
+}
+
+// ── Connexion ──────────────────────────────────────────────────────────────
+async function connexion() {
+    if (connexionLoading || !supabase1) return;
+
+    const emailInput    = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    if (!emailInput || !passwordInput) return;
+
+    const email    = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) { afficherAlerte('Veuillez remplir tous les champs.', 'danger'); return; }
+    if (!validerEmail(email)) { afficherAlerte('Veuillez saisir une adresse email valide.', 'danger'); return; }
+
+    setConnexionLoading(true);
+    try {
+        console.log('🔄 Tentative de connexion pour:', email);
+
+        const { data, error } = await supabase1.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        const user = data.user;
+        if (!user) throw new Error('Erreur de connexion');
+
+        console.log('✅ Connexion auth réussie, user ID:', user.id);
+        localStorage.setItem('remembered_email', email);
+
+        const profil = await verifierOuCreerProfil(user);
+        if (!profil) {
+            await supabase1.auth.signOut();
+            throw new Error('Erreur de configuration du profil');
+        }
+
+        afficherAlerte(`Bienvenue ${profil.nom || email.split('@')[0]} !`, 'success');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const { data: { session: sessionVerifiee } } = await supabase1.auth.getSession();
+        if (!sessionVerifiee) throw new Error('Session non établie, veuillez réessayer');
+
+        console.log('✅ Session vérifiée, redirection...');
+        setTimeout(() => {
+            window.location.href = 'home.html?connexion=success&t=' + Date.now();
+        }, 2000);
+
+    } catch (error) {
+        console.error('❌ Erreur de connexion:', error);
+        let msg = 'Erreur de connexion';
+        if (error.message.includes('Invalid login credentials')) msg = 'Email ou mot de passe incorrect';
+        else if (error.message.includes('Email not confirmed'))  msg = 'Veuillez confirmer votre email. Vérifiez votre boîte de réception.';
+        else if (error.message.includes('Session non établie'))  msg = 'Problème de session, veuillez réessayer';
+        else msg = error.message;
+        afficherAlerte(msg, 'danger');
+    } finally {
+        setConnexionLoading(false);
+    }
+}
+
+async function verifierOuCreerProfil(user) {
+    if (!supabase1) return null;
+    try {
+        const { data: existingUser, error: selectError } = await supabase1
+            .from('utilisateurs').select('*').eq('id', user.id).maybeSingle();
+
+        if (selectError) console.warn('Erreur vérification utilisateur:', selectError);
+        if (existingUser) return existingUser;
+
+        console.log('🆕 Création du profil utilisateur...');
+        const nom       = user.user_metadata?.nom || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilisateur';
+        const telephone = user.user_metadata?.telephone || '';
+
+        const { data: insertedUser, error: insertError } = await supabase1
+            .from('utilisateurs')
+            .insert([{ id: user.id, email: user.email, nom, telephone, roles: ['acheteur', 'vendeur'],
+                       date_inscription: new Date().toISOString(), avatar: null,
+                       note_moyenne: 0, nombre_ventes: 0, nombre_achats: 0 }])
+            .select().single();
+
+        if (insertError) {
+            console.error('❌ Erreur création profil:', insertError);
+            if (insertError.code === '23505') {
+                const { data: retryUser } = await supabase1.from('utilisateurs').select('*').eq('id', user.id).maybeSingle();
+                if (retryUser) return retryUser;
+            }
+            return null;
+        }
+        return insertedUser;
+
+    } catch (error) {
+        console.error('❌ Erreur profil:', error);
+        return null;
+    }
+}
+
+// ── Réinitialisation mot de passe ──────────────────────────────────────────
+
+function afficherModalResetPassword() {
+    resetStep = 1;
+    mettreAJourModalReset();
+    if (resetPasswordModal) resetPasswordModal.show();
+}
+
+function mettreAJourModalReset() {
+    const modalBody   = document.querySelector('#resetPasswordModal .modal-body');
+    const modalFooter = document.querySelector('#resetPasswordModal .modal-footer');
+    if (!modalBody || !modalFooter) return;
+
+    if (resetStep === 1) {
+        const emailPrefill = document.getElementById('email')?.value || '';
+
+        modalBody.innerHTML = `
+            <p class="text-muted small mb-3">
+                Saisissez votre adresse email pour recevoir un lien de réinitialisation.
+            </p>
+            <div class="mb-3">
+                <label for="reset-email" class="form-label">Adresse email</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="reset-email"
+                           placeholder="votre@email.com" autocomplete="email"
+                           value="${emailPrefill}">
+                </div>
+            </div>`;
+
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="fa fa-times me-1"></i> Annuler
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-send-reset">
+                <span id="reset-text"><i class="fa fa-paper-plane me-1"></i> Envoyer</span>
+                <span id="reset-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>`;
+
+        // Entrée dans le champ → soumettre
+        document.getElementById('reset-email')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') envoyerResetPassword();
+        });
+        document.getElementById('btn-send-reset')?.addEventListener('click', envoyerResetPassword);
+
+    } else {
+        // Étape 2 : confirmation
+        const email = document.getElementById('reset-email')?.value || '';
+        modalBody.innerHTML = `
+            <div class="text-center">
+                <div style="font-size:4rem;color:#28a745;margin-bottom:15px;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h5 class="mb-3">Email envoyé !</h5>
+                <p class="text-muted mb-2">Un lien de réinitialisation a été envoyé à :</p>
+                <div style="background:#e8f0fe;padding:12px;border-radius:8px;font-weight:600;
+                            color:#4361ee;word-break:break-all;margin:15px 0;">
+                    ${email}
+                </div>
+                <p class="small text-muted mt-3">
+                    <i class="fas fa-clock me-1"></i>
+                    Le lien expire dans 1 heure. Vérifiez vos spams si vous ne le trouvez pas.
+                </p>
+            </div>`;
+
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                <i class="fa fa-check me-1"></i> Fermer
+            </button>`;
+    }
+}
+
+// ✅ Utilise le système natif Supabase — pas de table custom, pas de Resend
+async function envoyerResetPassword() {
+    if (!supabase1) return;
+
+    const resetEmailInput = document.getElementById('reset-email');
+    const btnSendReset    = document.getElementById('btn-send-reset');
+    const resetText       = document.getElementById('reset-text');
+    const resetSpinner    = document.getElementById('reset-spinner');
+    if (!resetEmailInput) return;
+
+    const email = resetEmailInput.value.trim();
+    if (!email || !validerEmail(email)) {
+        afficherAlerte('Veuillez saisir une adresse email valide.', 'danger');
+        return;
+    }
+
+    if (btnSendReset)  btnSendReset.disabled = true;
+    if (resetText)     resetText.classList.add('d-none');
+    if (resetSpinner)  resetSpinner.classList.remove('d-none');
+
+    try {
+        console.log('📧 Envoi du lien de réinitialisation pour:', email);
+
+        // ✅ Supabase envoie lui-même l'email avec un lien sécurisé
+        // Le token_hash sera présent dans l'URL de redirection
+        const { error } = await supabase1.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password.html`,
+        });
+
+        if (error) throw error;
+
+        console.log('✅ Email de réinitialisation envoyé');
+        localStorage.setItem('remembered_email', email);
+
+        // Passer à l'étape de confirmation
+        resetStep = 2;
+        mettreAJourModalReset();
+
+    } catch (error) {
+        console.error('❌ Erreur reset:', error);
+
+        let msg = "Erreur lors de l'envoi de l'email";
+        if (error.message.includes('rate limit')) {
+            msg = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
+        } else if (error.message) {
+            msg = error.message;
+        }
+        afficherAlerte(msg, 'danger');
+
+        if (btnSendReset)  btnSendReset.disabled = false;
+        if (resetText)     resetText.classList.remove('d-none');
+        if (resetSpinner)  resetSpinner.classList.add('d-none');
+    }
+}
+
+// ── Utilitaires ────────────────────────────────────────────────────────────
+
+function validerEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function setConnexionLoading(loading) {
+    connexionLoading = loading;
+    const btnLogin     = document.getElementById('btn-login');
+    const loginText    = document.getElementById('login-text');
+    const loginSpinner = document.getElementById('login-spinner');
+    if (!btnLogin || !loginText || !loginSpinner) return;
+    btnLogin.disabled = loading;
+    if (loading) {
+        loginText.classList.add('d-none');
+        loginSpinner.classList.remove('d-none');
+    } else {
+        loginText.classList.remove('d-none');
+        loginSpinner.classList.add('d-none');
+    }
+}
+
+function afficherAlerte(message, type) {
+    let alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'alert-container';
+        Object.assign(alertContainer.style, { position: 'fixed', top: '20px', right: '20px', zIndex: '9999' });
+        document.body.appendChild(alertContainer);
+    }
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show shadow`;
+    alert.innerHTML = `${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>`;
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+    setTimeout(() => { if (alert.parentNode) alert.remove(); }, 5000);
+}
+
+async function verifierConnexionExistante() {
+    if (!supabase1) return;
+    try {
+        const { data: { session } } = await supabase1.auth.getSession();
+        if (session?.user) {
+            console.log("👤 Utilisateur déjà connecté, redirection...");
+            window.location.href = 'home.html?session=active';
+        }
+    } catch (error) {
+        console.warn('Erreur vérification session existante:', error);
+    }
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ============================================
 // PAGE INSCRIPTION
@@ -3335,7 +4177,7 @@ async function ouvrirAchatDetail() {
 
 
 
-// 🔥 Confirmer l'achat (sans décrémentation manuelle)
+/*// 🔥 Confirmer l'achat (sans décrémentation manuelle)
 async function confirmerAchatDetail() {
     if (!supabase1 || !UTILISATEUR_COURANT || !produitActuel || !vendeurActuel) return;
     
@@ -3405,7 +4247,87 @@ async function confirmerAchatDetail() {
         console.error('Erreur achat:', error);
         afficherMessageDetail('❌ Erreur lors de l\'achat: ' + error.message, 'error');
     }
+}*/
+
+
+
+// 🔥 Confirmer l'achat (sans décrémentation manuelle)
+async function confirmerAchatDetail() {
+    if (!supabase1 || !UTILISATEUR_COURANT || !produitActuel || !vendeurActuel) return;
+    
+    if (!positionLivraison) {
+        alert('Veuillez sélectionner une position de livraison sur la carte');
+        return;
+    }
+    
+    try {
+        const { data: produit, error: checkError } = await supabase1
+            .from('produits')
+            .select('est_actif')
+            .eq('id', produitActuel.id)
+            .single();
+            
+        if (checkError) throw checkError;
+        
+        if (!produit.est_actif) {
+            alert('Ce produit n\'est plus disponible à la vente');
+            window.location.reload();
+            return;
+        }
+        
+        // 🔥 Vérifier les commandes gratuites pour le prix
+        const commandesGratuites = await verifierCommandesGratuites();
+        const frais = commandesGratuites > 0 
+            ? { total: produitActuel.prix }
+            : await calculerFraisAvecGratuit(produitActuel.prix);
+        
+        const codeUnique = genererCodeUniqueDetail();
+        
+        const commande = {
+            code_unique: codeUnique,
+            id_produit: produitActuel.id,
+            id_acheteur: UTILISATEUR_COURANT,
+            id_vendeur: vendeurActuel.id,
+            prix: frais.total,
+            latitude: positionLivraison[0],
+            longitude: positionLivraison[1],
+            telephone_client: userData?.telephone || '',
+            etat: 'en attente de livraison',
+            paiement_recu: false,
+            created_at: new Date().toISOString()
+        };
+
+        const { error, data: commandeInseree } = await supabase1
+            .from('commandes')
+            .insert([commande])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // 🔥 ENVOYER LA NOTIFICATION AU VENDEUR
+        await envoyerNotificationCommande(commandeInseree, vendeurActuel, produitActuel);
+
+        // 🔥 NE PAS décrémenter ici - le trigger SQL le fera automatiquement
+
+        if (achatModal) achatModal.hide();
+        
+        const messageGratuit = commandesGratuites > 0 
+            ? `🎉 Commande gratuite enregistrée !`
+            : '✅ Achat confirmé ! Votre commande a été enregistrée.';
+        
+        afficherMessageDetail(messageGratuit, 'success');
+        
+        setTimeout(() => {
+            window.location.href = `historique_commande.html?success=${codeUnique}`;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Erreur achat:', error);
+        afficherMessageDetail('❌ Erreur lors de l\'achat: ' + error.message, 'error');
+    }
 }
+
 
 // Afficher une erreur
 function afficherErreurDetail() {
@@ -3457,10 +4379,78 @@ function genererCodeUniqueDetail() {
 
 
 
+// ============================================
+// 🔥 FONCTIONS DE NOTIFICATIONS CORRIGÉES
+// ============================================
 
+// Envoyer une notification au vendeur après une commande
+async function envoyerNotificationCommande(commande, vendeur, produit) {
+    if (!supabase1) return;
+    
+    try {
+        // Récupérer les tokens FCM du vendeur
+        const { data: tokens, error: tokensError } = await supabase1
+            .from('fcm_tokens')
+            .select('token')
+            .eq('user_id', commande.id_vendeur);
 
+        if (tokensError) {
+            console.error('❌ Erreur récupération tokens:', tokensError);
+            return;
+        }
 
+        if (!tokens || tokens.length === 0) {
+            console.log('ℹ️ Aucun token FCM trouvé pour le vendeur');
+            return;
+        }
 
+        // Récupérer le nom de l'acheteur depuis la commande ou userData
+        const acheteurNom = commande.acheteur_nom || userData?.nom || 'Un acheteur';
+        const produitTitre = produit.titre || 'un produit';
+        const prixFormate = commande.prix?.toLocaleString() + ' FCFA' || '';
+
+        // Préparer le message de notification
+        const notification = {
+            title: '🛍️ Nouvelle commande reçue !',
+            body: `${acheteurNom} a commandé "${produitTitre}" pour ${prixFormate}`,
+            icon: '/icon-192.png',
+            badge: '/badge-72.png',
+            data: {
+                commande_id: commande.id,
+                type: 'nouvelle_commande',
+                url: '/historique-ventes.html',
+                click_action: '/historique-ventes.html'
+            },
+            actions: [
+                { action: 'open', title: 'Voir la commande' },
+                { action: 'close', title: 'Fermer' }
+            ]
+        };
+
+        // ❌ Ne pas envoyer depuis le frontend !
+        // La notification doit être envoyée depuis l'Edge Function
+        
+        // ✅ Solution 1: Appeler l'Edge Function
+        const { error: functionError } = await supabase1.functions.invoke('notify-commande', {
+            body: {
+                commande: commande,
+                vendeur: vendeur,
+                produit: produit,
+                acheteur_nom: acheteurNom,
+                tokens: tokens.map(t => t.token)
+            }
+        });
+
+        if (functionError) {
+            console.error('❌ Erreur appel Edge Function:', functionError);
+        } else {
+            console.log(`📨 Notifications envoyées via Edge Function`);
+        }
+
+    } catch (error) {
+        console.error('❌ Erreur envoi notification:', error);
+    }
+}
 
 
 
@@ -3749,6 +4739,7 @@ function initialiserPageVendre() {
     if (form) {
         form.addEventListener('submit', publierProduit);
     }
+
 }
 
 // Vérifier que l'utilisateur est connecté et a le rôle vendeur
@@ -3768,6 +4759,10 @@ async function verifierConnexionVendeur() {
         alert("Vous devez avoir un compte vendeur pour accéder à cette page.");
         window.location.href = 'index.html';
     }
+
+
+    initialiserCompteurVentes();     // ✅ À GARDER
+
 }
 
 // Initialiser l'upload d'images
@@ -4533,6 +5528,11 @@ function initialiserPageMesProduits() {
     
     verifierConnexionVendeur();
     chargerMesProduits();
+
+
+
+    verifierVentesEnAttente();
+
     
     const modalElement = document.getElementById('editModal');
     if (modalElement && typeof bootstrap !== 'undefined') {
@@ -4546,6 +5546,8 @@ async function chargerMesProduits() {
     await attendreUtilisateur();
     
     if (!UTILISATEUR_COURANT || !supabase1) return;
+
+    initialiserCompteurVentes();     // ✅ À GARDER
     
     try {
         const { data, error } = await supabase1
@@ -4805,6 +5807,175 @@ async function supprimerProduit(produitId) {
     }
 }
 
+
+
+
+
+
+
+// ============================================
+// COMPTEUR DE COMMANDES EN ATTENTE POUR LES VENTES
+// ============================================
+
+let commandesVentesEnAttente = 0;
+let verificationVentesInterval = null;
+
+// Initialiser le compteur de commandes en attente pour les ventes
+function initialiserCompteurVentes() {
+    console.log('🔢 Initialisation du compteur de ventes en attente...');
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!UTILISATEUR_COURANT) {
+        console.log('👤 Utilisateur non connecté, pas de compteur');
+        return;
+    }
+    
+    // Vérifier immédiatement
+    verifierVentesEnAttente();
+    
+    // Vérifier toutes les 30 secondes
+    if (verificationVentesInterval) {
+        clearInterval(verificationVentesInterval);
+    }
+    verificationVentesInterval = setInterval(verifierVentesEnAttente, 30000);
+    
+    // Ajouter un écouteur pour la visibilité de la page
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && UTILISATEUR_COURANT) {
+            console.log('👁️ Page visible, vérification des ventes...');
+            verifierVentesEnAttente();
+        }
+    });
+    
+    // Écouter les changements d'authentification
+    if (supabase1) {
+        supabase1.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                console.log('🔢 Connexion détectée, activation compteur ventes');
+                UTILISATEUR_COURANT = session.user.id;
+                verifierVentesEnAttente();
+                
+                if (!verificationVentesInterval) {
+                    verificationVentesInterval = setInterval(verifierVentesEnAttente, 30000);
+                }
+            } else if (event === 'SIGNED_OUT') {
+                console.log('🔢 Déconnexion détectée, désactivation compteur ventes');
+                cacherCompteurVentes();
+                if (verificationVentesInterval) {
+                    clearInterval(verificationVentesInterval);
+                    verificationVentesInterval = null;
+                }
+            }
+        });
+    }
+}
+
+// Vérifier les ventes en attente de livraison
+async function verifierVentesEnAttente() {
+    if (!UTILISATEUR_COURANT || !supabase1) {
+        console.log('❌ Pas d\'utilisateur connecté ou Supabase non initialisé');
+        return;
+    }
+    
+    try {
+        console.log('🔍 Vérification des ventes en attente pour:', UTILISATEUR_COURANT);
+        
+        // 🔥 Compter UNIQUEMENT les commandes en attente de livraison où l'utilisateur est vendeur
+        const { count, error } = await supabase1
+            .from('commandes')
+            .select('*', { count: 'exact', head: true })
+            .eq('id_vendeur', UTILISATEUR_COURANT)
+            .eq('etat', 'en attente de livraison');
+        
+        if (error) {
+            console.error('❌ Erreur vérification ventes:', error);
+            return;
+        }
+        
+        console.log('📊 Commandes en attente trouvées:', count);
+        
+        const nouveauCompte = count || 0;
+        
+        if (nouveauCompte !== commandesVentesEnAttente) {
+            console.log(`📦 Ventes en attente: ${nouveauCompte}`);
+            commandesVentesEnAttente = nouveauCompte;
+            mettreAJourCompteurVentes();
+        } else {
+            console.log('ℹ️ Pas de changement');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la vérification des ventes:', error);
+    }
+}
+
+// Mettre à jour l'affichage du compteur sur le lien du dashboard ET dans le dropdown
+function mettreAJourCompteurVentes() {
+    const compteurDashboard = document.getElementById('commandes-ventes-attente');
+    const compteurDropdown = document.getElementById('dropdown-ventes-attente');
+    
+    const valeur = commandesVentesEnAttente > 99 ? '99+' : commandesVentesEnAttente;
+    
+    // Mettre à jour le badge dans le dashboard
+    if (compteurDashboard) {
+        if (commandesVentesEnAttente > 0) {
+            compteurDashboard.textContent = valeur;
+            compteurDashboard.style.display = 'inline';
+            
+            // Animation
+            compteurDashboard.style.animation = 'none';
+            compteurDashboard.offsetHeight;
+            compteurDashboard.style.animation = 'compteur-pulse 0.5s ease';
+        } else {
+            compteurDashboard.style.display = 'none';
+        }
+    }
+    
+    // Mettre à jour le badge dans le dropdown
+    if (compteurDropdown) {
+        if (commandesVentesEnAttente > 0) {
+            compteurDropdown.textContent = valeur;
+            compteurDropdown.style.display = 'inline';
+        } else {
+            compteurDropdown.style.display = 'none';
+        }
+    }
+}
+
+// Cacher le compteur
+function cacherCompteurVentes() {
+    commandesVentesEnAttente = 0;
+    mettreAJourCompteurVentes();
+}
+
+// Réinitialiser le compteur quand on consulte la page (optionnel)
+function reinitialiserCompteurVentes() {
+    console.log('📊 Page historique ventes consultée, réinitialisation du compteur');
+    // Note: On ne réinitialise pas le compteur ici car on veut toujours afficher
+    // les commandes en attente, même sur la page d'historique
+    // Si vous voulez le cacher quand on est sur la page, décommentez la ligne suivante :
+    // cacherCompteurVentes();
+}
+
+// Animation CSS (si pas déjà présente)
+if (!document.querySelector('#compteur-style')) {
+    const styleCompteur = document.createElement('style');
+    styleCompteur.id = 'compteur-style';
+    styleCompteur.textContent = `
+    @keyframes compteur-pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    `;
+    document.head.appendChild(styleCompteur);
+}
+
+
+
+
+
+
 // ============================================
 // PAGE HISTORIQUE VENTES
 // ============================================
@@ -4837,6 +6008,9 @@ async function initialiserPageHistoriqueVentes() {
     // Charger les infos utilisateur et mettre à jour l'interface
     await chargerInfosUtilisateur();
     afficherUtilisateurConnecte();
+
+
+    verifierVentesEnAttente();
     
     // Charger les ventes
     await chargerVentes();
