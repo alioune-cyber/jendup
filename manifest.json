@@ -1,0 +1,19 @@
+{
+  "name": "jëndUp - Achat et vente d'occasion",
+  "short_name": "jëndUp",
+  "description": "Plateforme de vente d'occasion entre particuliers",
+  "start_url": "/home.html",
+  "display": "standalone",
+  "background_color": "#4361ee",
+  "theme_color": "#4361ee",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription confirmée - jëndUp</title>
+  
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  
+  <style>
+    :root {
+      --primary-blue: #4361ee;
+      --secondary-purple: #764ba2;
+      --success-green: #28a745;
+      --light-bg: #f8f9fa;
+      --text-color: #333;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .confirmation-card {
+      background: white;
+      border-radius: 30px;
+      padding: 3rem 2rem;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideUp 0.6s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .confirmation-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .logo {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--primary-blue);
+      margin-bottom: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 25px;
+      background: var(--light-bg);
+      border-radius: 50px;
+    }
+    
+    .logo i {
+      color: var(--primary-blue);
+    }
+    
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 25px;
+      color: white;
+      font-size: 3.5rem;
+      box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+      }
+    }
+    
+    h1 {
+      color: var(--text-color);
+      font-weight: 700;
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+    }
+    
+    .welcome-message {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      border-radius: 20px;
+      padding: 25px;
+      margin: 25px 0;
+      border-left: 5px solid var(--primary-blue);
+      text-align: left;
+    }
+    
+    .welcome-message h3 {
+      color: var(--primary-blue);
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+    
+    .welcome-message p {
+      color: #555;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    
+    .welcome-message i {
+      color: var(--primary-blue);
+      margin-right: 10px;
+    }
+    
+    .badge-container {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 25px 0;
+      flex-wrap: wrap;
+    }
+    
+    .role-badge {
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      color: white;
+      padding: 10px 25px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
+    }
+    
+    .role-badge i {
+      font-size: 1.2rem;
+    }
+    
+    .stats-mini {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 30px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-blue);
+    }
+    
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 30px 0 20px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      color: white;
+      border: none;
+      padding: 14px 35px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-primary-custom:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(67, 97, 238, 0.4);
+      color: white;
+    }
+    
+    .btn-outline-custom {
+      background: white;
+      color: var(--primary-blue);
+      border: 2px solid var(--primary-blue);
+      padding: 12px 30px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-outline-custom:hover {
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      color: white;
+      border-color: transparent;
+      transform: translateY(-3px);
+    }
+    
+    .tips-section {
+      background: #e8f0fe;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 25px;
+      text-align: left;
+    }
+    
+    .tips-section h4 {
+      color: var(--primary-blue);
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .tips-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .tips-section li {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #555;
+    }
+    
+    .tips-section li i {
+      color: var(--primary-blue);
+      width: 20px;
+    }
+    
+    .countdown {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-top: 20px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 30px;
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--primary-blue);
+      opacity: 0.6;
+      border-radius: 50%;
+      animation: fall 3s infinite;
+    }
+    
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .confirmation-card {
+        padding: 2rem 1.5rem;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .stats-mini {
+        gap: 15px;
+      }
+      
+      .stat-value {
+        font-size: 1.4rem;
+      }
+      
+      .btn-primary-custom, .btn-outline-custom {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="confirmation-card">
+  <!-- Logo -->
+  <div class="logo">
+    <i class="fas fa-exchange-alt"></i>
+    jëndUp
+  </div>
+  
+  <!-- Icône de succès -->
+  <div class="success-icon">
+    <i class="fas fa-check"></i>
+  </div>
+  
+  <!-- Titre -->
+  <h1>Bienvenue chez jëndUp !</h1>
+  <p class="text-muted">Votre inscription a été confirmée avec succès</p>
+  
+  <!-- Message de bienvenue personnalisé -->
+  <div class="welcome-message">
+    <h3>
+      <i class="fas fa-hand-peace"></i>
+      Bonjour <span id="userName">Cher utilisateur</span> !
+    </h3>
+    <p>
+      <i class="fas fa-check-circle text-success"></i>
+      Nous sommes ravis de vous compter parmi notre communauté jëndUp.
+    </p>
+    <p>
+      <i class="fas fa-gift text-warning"></i>
+      En cadeau de bienvenue, vous bénéficiez de <strong>3 commandes sans frais</strong> !
+    </p>
+    <p>
+      <i class="fas fa-star text-primary"></i>
+      Vous êtes maintenant <strong>membres de notre communauté</strong>. Profitez pleinement de la plateforme.
+    </p>
+  </div>
+  
+  <!-- Badges des rôles -->
+  <div class="badge-container">
+    <span class="role-badge">
+      <i class="fas fa-shopping-bag"></i>
+      Acheteur
+    </span>
+    <span class="role-badge">
+      <i class="fas fa-store"></i>
+      Vendeur
+    </span>
+  </div>
+  
+  
+  <!-- Boutons d'action -->
+  <div class="action-buttons">
+    <a href="home.html" class="btn-primary-custom">
+      <i class="fas fa-home"></i>
+      Accéder à l'accueil
+    </a>
+    <a href="annonces.html" class="btn-outline-custom">
+      <i class="fas fa-search"></i>
+      Découvrir des annonces
+    </a>
+  </div>
+  
+  <!-- Section conseils -->
+  <div class="tips-section">
+    <h4>
+      <i class="fas fa-lightbulb"></i>
+      Pour bien commencer :
+    </h4>
+    <ul>
+      <li>
+        <i class="fas fa-camera"></i>
+        Publiez votre première annonce et profitez de vos 3 commandes gratuites
+      </li>
+      <li>
+        <i class="fas fa-map-marker-alt"></i>
+        Indiquez précisément votre position pour faciliter la livraison
+      </li>
+      <li>
+        <i class="fas fa-bell"></i>
+        Activez les notifications pour ne rater aucune commande
+      </li>
+      <li>
+        <i class="fas fa-star"></i>
+        Soyez actif et réactif pour construire votre réputation
+      </li>
+    </ul>
+  </div>
+  
+  <!-- Redirection automatique -->
+  <div class="countdown" id="countdown">
+    <i class="fas fa-clock me-2"></i>
+    Redirection automatique vers l'accueil dans <span id="timer">10</span> secondes
+  </div>
+  
+  <!-- Liens supplémentaires -->
+  <div class="mt-3 small">
+    <a href="vendre.html" class="text-decoration-none text-primary me-3">
+      <i class="fas fa-plus-circle"></i> Vendre
+    </a>
+    <a href="contact.html" class="text-decoration-none text-primary">
+      <i class="fas fa-envelope"></i> Contact
+    </a>
+  </div>
+</div>
+
+<!-- Script pour la redirection et animation -->
+<script>
+  // Récupérer le nom depuis l'URL ou localStorage
+  document.addEventListener('DOMContentLoaded', function() {
+    // Récupérer le nom depuis l'URL (paramètre ?name=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name') || localStorage.getItem('user_name') || 'Cher utilisateur';
+    
+    // Afficher le nom personnalisé
+    document.getElementById('userName').textContent = name;
+    
+    // Sauvegarder pour les prochaines fois
+    localStorage.setItem('user_name', name);
+  });
+
+  // Compte à rebours et redirection
+  let seconds = 10;
+  const timerElement = document.getElementById('timer');
+  
+  const countdown = setInterval(() => {
+    seconds--;
+    timerElement.textContent = seconds;
+    
+    if (seconds <= 0) {
+      clearInterval(countdown);
+      window.location.href = 'home.html?welcome=1';
+    }
+  }, 1000);
+  
+  // Animation de confettis (optionnel)
+  function createConfetti() {
+    for (let i = 0; i < 20; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+      confetti.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
+      document.body.appendChild(confetti);
+      
+      setTimeout(() => {
+        confetti.remove();
+      }, 3000);
+    }
+  }
+  
+  // Lancer les confettis
+  createConfetti();
+  setInterval(createConfetti, 4000);
+</script>
+
+<!-- Scripts Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

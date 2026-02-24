@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conditions Générales d'Utilisation - jëndUp</title>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Favicon de base -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <style>
+        :root {
+            --primary-blue: #4361ee;
+            --secondary-purple: #764ba2;
+            --light-bg: #f8f9fa;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --text-color: #333;
+            --border-color: #e9ecef;
+            --refund-green: #d4edda;
+            --refund-border: #c3e6cb;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1000px;
+        }
+        
+        .page-title {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+        
+        .page-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a);
+            border-radius: 2px;
+        }
+        
+        .last-update {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+        
+        .section-title {
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.5rem;
+            color: var(--secondary-purple);
+        }
+        
+        .subsection-title {
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 1.5rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .article-content {
+            line-height: 1.7;
+            color: #4a5568;
+        }
+        
+        .article-content p {
+            margin-bottom: 1rem;
+        }
+        
+        .article-content ul, .article-content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        
+        .article-content li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .highlight-box {
+            background: var(--light-bg);
+            border-left: 4px solid var(--primary-blue);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        
+        /* Style spécial pour la politique de remboursement */
+        .refund-policy {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid var(--refund-border);
+        }
+        
+        .refund-title {
+            color: #155724;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .refund-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .refund-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .refund-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .refund-card.success {
+            border-top: 4px solid #28a745;
+        }
+        
+        .refund-card.warning {
+            border-top: 4px solid #ffc107;
+        }
+        
+        .refund-card.danger {
+            border-top: 4px solid #dc3545;
+        }
+        
+        .refund-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .refund-card.success .refund-icon {
+            color: #28a745;
+        }
+        
+        .refund-card.warning .refund-icon {
+            color: #ffc107;
+        }
+        
+        .refund-card.danger .refund-icon {
+            color: #dc3545;
+        }
+        
+        .refund-card h4 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .refund-percent {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #28a745;
+            margin: 1rem 0;
+        }
+        
+        .refund-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        
+        .refund-note i {
+            color: #856404;
+            margin-right: 8px;
+        }
+        
+        .table-of-contents {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .table-of-contents h4 {
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+        
+        .table-of-contents ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+        }
+        
+        .table-of-contents li {
+            margin-bottom: 0.3rem;
+        }
+        
+        .table-of-contents a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: inline-block;
+            padding: 0.3rem 0;
+        }
+        
+        .table-of-contents a:hover {
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+        
+        .table-of-contents a i {
+            margin-right: 8px;
+            color: var(--primary-blue);
+            font-size: 0.8rem;
+        }
+        
+        .badge-cgu {
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+        
+        .footer-links {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-blue);
+        }
+        
+        .btn-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            transition: all 0.3s;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
+        }
+        
+        .btn-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .btn-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+        
+        /* Menu utilisateur */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            min-width: 250px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-info {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-email {
+            font-weight: bold;
+            color: var(--primary-blue);
+            word-break: break-all;
+        }
+
+        .dropdown-link {
+            display: block;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-link:hover {
+            background-color: #fff1e8;
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+
+        .dropdown-link i {
+            width: 20px;
+            margin-right: 8px;
+        }
+
+        .btn-deconnexion {
+            width: 100%;
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-deconnexion:hover {
+            background: #c82333;
+        }
+
+        /* ===== AJOUTS UNIQUEMENT POUR MOBILE ===== */
+        /* Sans modifier aucun style existant */
+        
+        @media (max-width: 768px) {
+            /* Header plus compact */
+            .navbar-brand {
+                font-size: 20px;
+            }
+            
+            .navbar-custom .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            
+            /* Menu burger */
+            .navbar-collapse {
+                background: rgba(255,255,255,0.15);
+                backdrop-filter: blur(10px);
+                padding: 15px;
+                border-radius: 12px;
+                margin-top: 10px;
+            }
+            
+            .navbar-collapse .mx-auto {
+                text-align: center;
+                padding: 10px 0;
+            }
+            
+            /* Conteneur principal */
+            .main-container {
+                padding: 1.5rem !important;
+                margin: 1rem auto !important;
+                border-radius: 16px;
+            }
+            
+            /* Titre principal */
+            .page-title {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .page-title:after {
+                width: 80px;
+            }
+            
+            .last-update {
+                font-size: 0.85rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .badge-cgu {
+                margin-left: 0;
+            }
+            
+            /* Table des matières */
+            .table-of-contents {
+                padding: 1rem;
+            }
+            
+            .table-of-contents ul {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-of-contents a {
+                font-size: 0.9rem;
+                padding: 0.4rem 0;
+            }
+            
+            /* Sections */
+            .section-title {
+                font-size: 1.2rem;
+                margin: 1.5rem 0 0.8rem 0;
+                flex-wrap: wrap;
+            }
+            
+            .section-title i {
+                font-size: 1.2rem;
+            }
+            
+            .subsection-title {
+                font-size: 1rem;
+            }
+            
+            .article-content {
+                font-size: 0.95rem;
+            }
+            
+            .article-content ul, 
+            .article-content ol {
+                padding-left: 1.2rem;
+            }
+            
+            .article-content li {
+                font-size: 0.9rem;
+            }
+            
+            /* Tableau des frais */
+            .table-responsive {
+                margin: 1rem 0;
+                border-radius: 8px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .table {
+                min-width: 500px;
+            }
+            
+            .table th, 
+            .table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+            
+            /* Politique de remboursement */
+            .refund-policy {
+                padding: 1.2rem !important;
+                margin: 1.5rem 0 !important;
+            }
+            
+            .refund-title {
+                font-size: 1.2rem;
+            }
+            
+            .refund-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .refund-card {
+                padding: 1.2rem;
+            }
+            
+            .refund-card h4 {
+                font-size: 1.1rem;
+            }
+            
+            .refund-percent {
+                font-size: 1.8rem;
+            }
+            
+            .refund-card ul li {
+                font-size: 0.85rem;
+            }
+            
+            .refund-note {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .refund-note i.fa-2x {
+                font-size: 1.5rem !important;
+                margin-right: 8px !important;
+            }
+            
+            /* Boîte highlight */
+            .highlight-box {
+                padding: 1rem;
+                margin: 1rem 0;
+                font-size: 0.9rem;
+            }
+            
+            /* Section récapitulative */
+            .highlight-box.text-center .row {
+                flex-direction: column;
+            }
+            
+            .highlight-box.text-center .col-md-6 {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .highlight-box.text-center .col-md-6:last-child {
+                margin-bottom: 0;
+            }
+            
+            .highlight-box.text-center h5 {
+                font-size: 1rem;
+            }
+            
+            .highlight-box.text-center ul {
+                font-size: 0.85rem;
+                padding-left: 1.2rem;
+            }
+            
+            /* Footer links */
+            .footer-links {
+                gap: 1rem;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 2rem;
+                padding-top: 1.5rem;
+            }
+            
+            .footer-links a {
+                font-size: 0.9rem;
+                padding: 0.3rem 0;
+            }
+            
+            /* Bouton retour en haut */
+            .btn-top {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+            
+            /* Dropdown utilisateur pour mobile */
+            .user-dropdown {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            
+            #btn-user {
+                padding: 6px 10px;
+                font-size: 14px;
+            }
+            
+            #btn-connexion {
+                padding: 6px 10px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            
+            #btn-connexion i {
+                margin-right: 4px;
+            }
+        }
+        
+        /* Pour très petits écrans */
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 18px;
+            }
+            
+            .main-container {
+                padding: 1rem !important;
+            }
+            
+            .page-title {
+                font-size: 1.3rem;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+            }
+            
+            .refund-card {
+                padding: 1rem;
+            }
+            
+            .refund-percent {
+                font-size: 1.5rem;
+            }
+            
+            .btn-top {
+                width: 40px;
+                height: 40px;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="home.html">
+                <i class="fas fa-exchange-alt me-2"></i><span style="color: black;">jënd</span>Up
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="mx-auto">
+                    <span class="text-white">Conditions Générales</span>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-menu">
+                    <button id="btn-user" class="btn btn-outline-light d-none position-relative">
+                        <i class="fa fa-user me-1"></i>
+                        <span id="user-name"></span>
+                    </button>
+                    <div id="user-dropdown" class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-email" id="dropdown-email"></div>
+                            <div class="user-name" id="dropdown-name"></div>
+                            <div class="small text-muted" id="dropdown-telephone"></div>
+                        </div>
+                        <a href="vendre.html" class="dropdown-link">
+                            <i class="fa fa-plus-circle"></i> Vendre un article
+                        </a>
+                        <a href="mes-produits.html" class="dropdown-link">
+                            <i class="fa fa-box"></i> Mes produits
+                        </a>
+                        <a href="historique-ventes.html" class="dropdown-link">
+                            <i class="fa fa-history"></i> Historique ventes
+                        </a>
+                        <a href="historique-commandes.html" class="dropdown-link">
+                            <i class="fa fa-shopping-bag"></i> Mes achats
+                        </a>
+                        <button class="btn-deconnexion" id="btn-deconnexion">
+                            <i class="fa fa-sign-out-alt"></i> Déconnexion
+                        </button>
+                    </div>
+                    <a href="connexion.html" class="btn btn-outline-light" id="btn-connexion">
+                        <i class="fa fa-sign-in-alt me-1"></i> Connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Bouton retour en haut -->
+    <a href="home.html" class="btn-top" id="btnTop">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <!-- Contenu principal -->
+    <div class="container">
+        <div class="main-container">
+            <h1 class="page-title">
+                <i class="fas fa-file-contract me-2"></i>
+                Conditions Générales d'Utilisation
+            </h1>
+            
+            <div class="last-update">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Dernière mise à jour : 16 février 2026
+                <span class="badge-cgu">Version 1.0</span>
+            </div>
+
+            <!-- Table des matières -->
+            <div class="table-of-contents">
+                <h4><i class="fas fa-list me-2"></i>Sommaire</h4>
+                <ul>
+                    <li><a href="#article1"><i class="fas fa-chevron-right"></i> Article 1 : Préambule</a></li>
+                    <li><a href="#article2"><i class="fas fa-chevron-right"></i> Article 2 : Accès au service</a></li>
+                    <li><a href="#article3"><i class="fas fa-chevron-right"></i> Article 3 : Inscription</a></li>
+                    <li><a href="#article4"><i class="fas fa-chevron-right"></i> Article 4 : Obligations des vendeurs</a></li>
+                    <li><a href="#article5"><i class="fas fa-chevron-right"></i> Article 5 : Obligations des acheteurs</a></li>
+                    <li><a href="#article6"><i class="fas fa-chevron-right"></i> Article 6 : Processus d'achat</a></li>
+                    <li><a href="#article7"><i class="fas fa-chevron-right"></i> Article 7 : Frais et commissions</a></li>
+                    <li><a href="#article8"><i class="fas fa-chevron-right"></i> Article 8 : Livraison</a></li>
+                    <li><a href="#article9"><i class="fas fa-chevron-right"></i> Article 9 : Politique de remboursement</a></li>
+                    <li><a href="#article10"><i class="fas fa-chevron-right"></i> Article 10 : Garanties</a></li>
+                    <li><a href="#article11"><i class="fas fa-chevron-right"></i> Article 11 : Litiges</a></li>
+                    <li><a href="#article12"><i class="fas fa-chevron-right"></i> Article 12 : Données personnelles</a></li>
+                    <li><a href="#article13"><i class="fas fa-chevron-right"></i> Article 13 : Propriété intellectuelle</a></li>
+                    <li><a href="#article14"><i class="fas fa-chevron-right"></i> Article 14 : Modification des CGU</a></li>
+                </ul>
+            </div>
+
+            <div class="article-content">
+                <!-- ARTICLE 1 : PRÉAMBULE -->
+                <section id="article1">
+                    <h2 class="section-title">
+                        <i class="fas fa-scroll"></i>
+                        Article 1 : Préambule
+                    </h2>
+                    
+                    <p>Les présentes Conditions Générales d'Utilisation ont pour objet de définir les modalités et conditions dans lesquelles la plateforme jëndUp met à disposition de ses utilisateurs les services de vente et d'achat de biens d'occasion.</p>
+                    
+                    <p><strong>jëndUp</strong> signifie "acheter" en wolof, reflétant notre mission de faciliter les achats et ventes entre particuliers au Sénégal.</p>
+                    
+                    <p>jëndUp est une plateforme de vente entre particuliers qui permet à ses utilisateurs de :</p>
+                    <ul>
+                        <li>Publier des annonces de vente d'articles d'occasion</li>
+                        <li>Rechercher et acheter des articles proposés par d'autres utilisateurs</li>
+                        <li>Gérer leurs commandes et leur historique d'achats/ventes</li>
+                    </ul>
+                    
+                    <div class="highlight-box">
+                        <i class="fas fa-info-circle me-2" style="color: var(--primary-blue);"></i>
+                        <strong>Important :</strong> jëndUp gère la livraison et le service après-vente. Nous nous chargeons de livrer les articles et de traiter les éventuels remboursements en cas de problème.
+                    </div>
+                </section>
+
+                <!-- ARTICLE 3 : ACCÈS AU SERVICE -->
+                <section id="article2">
+                    <h2 class="section-title">
+                        <i class="fas fa-door-open"></i>
+                        Article 2 : Accès au service
+                    </h2>
+                    
+                    <p>L'accès à la Plateforme est gratuit. La publication d'annonces et les achats sont réservés aux Membres inscrits.</p>
+                </section>
+
+                <!-- ARTICLE 4 : INSCRIPTION -->
+                <section id="article3">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-plus"></i>
+                        Article 3 : Inscription
+                    </h2>
+                    
+                    <p>Pour devenir Membre, l'Utilisateur doit fournir une adresse email valide, un mot de passe sécurisé, son nom et accepter les CGU.</p>
+                    <p>Le Membre est responsable de la confidentialité de son compte.</p>
+                </section>
+
+                <!-- ARTICLE 5 : OBLIGATIONS DES VENDEURS -->
+                <section id="article4">
+                    <h2 class="section-title">
+                        <i class="fas fa-store"></i>
+                        Article 4 : Obligations des vendeurs
+                    </h2>
+                    
+                    <h3 class="subsection-title">4.1 Prix</h3>
+                    <p>Le Vendeur fixe librement le prix de vente de ses articles en FCFA. jëndUp n'intervient pas dans la fixation des prix.</p>
+                    
+                    <h3 class="subsection-title">4.2 Contenu des annonces</h3>
+                    <ul>
+                        <li>Description précise et honnête du bien</li>
+                        <li>Photos claires et représentatives (photo réelle de l'article)</li>
+                        <li>Indication de l'état réel (neuf, très bon état, bon état, état satisfaisant, à réparer)</li>
+                        <li>Limite de 5 annonces actives simultanément</li>
+                        <li>Chaque annonce sera active durant 30 jours au delà elle sera supprimé par le système</li>
+                    </ul>
+                    
+                    <h3 class="subsection-title">4.3 Produits interdits</h3>
+                    <ul>
+                        <li>Contrefaçons</li>
+                        <li>Armes et munitions</li>
+                        <li>Substances illicites</li>
+                        <li>Animaux</li>
+                        <li>Objets volés</li>
+                    </ul>
+
+                    <h3 class="subsection-title">4.4 Conformités des articles</h3>
+
+                    <p>Si un article est signalé comme non conforme par un acheteur et que notre équipe confirme le problème :</p>
+                    <ul>
+                        <li>L'article concerné est retiré immédiatement</li>
+                        <li>L'acheteur est remboursé selon notre politique (100% du montant)</li>
+                    </ul>
+
+                    <p>Si un vendeur met régulièrement en vente des articles interdits ou non conformes, jëndUp peut dans ce cas :</p>
+                    <ul>
+                        <li>Suspendre temporairement le compte (de 7 à 30 jours selon la gravité)</li>
+                        <li>Bloquer définitivement le compte en cas de récidives graves ou répétées</li>
+                    </ul>
+                    
+                    <h3 class="subsection-title">4.5 Disponibilité</h3>
+                    <p>Le Vendeur doit retirer son annonce dès que le bien n'est plus disponible. Tout bien vendu doit être retiré dans les 24 heures.</p>
+                </section>
+
+                <!-- ARTICLE 6 : OBLIGATIONS DES ACHETEURS -->
+                <section id="article5">
+                    <h2 class="section-title">
+                        <i class="fas fa-shopping-bag"></i>
+                        Article 5 : Obligations des acheteurs
+                    </h2>
+                    
+                    <ul>
+                        <li>Ne pas passer de commande sans intention réelle d'achat</li>
+                        <li>Payer le montant total (prix + frais) après la livraison</li>
+                        <li>Vérifier le bien à la livraison</li>
+                    </ul>
+                </section>
+
+                <!-- ARTICLE 7 : PROCESSUS D'ACHAT -->
+                <section id="article6">
+                    <h2 class="section-title">
+                        <i class="fas fa-shopping-cart"></i>
+                        Article 6 : Processus d'achat
+                    </h2>
+                    
+                    <h3 class="subsection-title">6.1 Confirmation d'achat</h3>
+                    <p>L'Acheteur confirme son achat après avoir sélectionné sa position de livraison sur la carte. Le montant total (prix de l'article + frais de protection + frais de livraison) est calculé automatiquement.</p>
+                    
+                    <h3 class="subsection-title">6.2 Annulation</h3>
+                    <p>L'Acheteur peut annuler sa commande, au niveau de la page historique des achats, dans les 10 minutes suivant la confirmation. Passé ce délai, l'annulation n'est possible qu'en cas de problème avec l'article (nous contacter dans ce cas).</p>
+                    
+                    <h3 class="subsection-title">6.3 Historique</h3>
+                    <p>Toutes les transactions sont enregistrées dans l'historique des commandes (achats) et des ventes.</p>
+                </section>
+
+                <!-- ARTICLE 8 : FRAIS ET COMMISSIONS -->
+                <section id="article7">
+                    <h2 class="section-title">
+                        <i class="fas fa-coins"></i>
+                        Article 7 : Frais et commissions
+                    </h2>
+                    
+                    <p>Les frais sont appliqués uniquement à l'Acheteur selon le barème suivant :</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead style="background: linear-gradient(135deg, var(--primary-blue), #ff8c5a); color: white;">
+                                <tr>
+                                    <th>Prix article (FCFA)</th>
+                                    <th>Frais protection acheteur</th>
+                                    <th>Livraison (FCFA)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>0 – 1 000</td><td>90 + 3%</td><td>300</td></tr>
+                                <tr><td>1 001 – 5 000</td><td>90 + 3%</td><td>500</td></tr>
+                                <tr><td>5 001 – 10 000</td><td>90 + 3%</td><td>700</td></tr>
+                                <tr><td>10 001 – 20 000</td><td>90 + 3%</td><td>1 000</td></tr>
+                                <tr><td>20 001 – 50 000</td><td>100 + 3%</td><td>1 500</td></tr>
+                                <tr><td>50 001 – 100 000</td><td>120 + 3%</td><td>2 000</td></tr>
+                                <tr><td>100 001+</td><td>800 + 3%</td><td>3 500</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="subsection-title">7.2 Protection acheteur</h3>
+                    <p>Les frais de protection couvrent :</p>
+                    <ul>
+                        <li>La garantie de conformité du bien</li>
+                        <li>Le remboursement en cas de problème</li>
+                        <li>Le service client dédié</li>
+                        <li>La gestion des litiges</li>
+                    </ul>
+                    
+                    <h3 class="subsection-title">7.3 Gratuité pour les vendeurs</h3>
+                    <p>La mise en vente est totalement gratuite. Aucune commission n'est prélevée sur le prix de vente.</p>
+                </section>
+
+                <!-- ARTICLE 9 : LIVRAISON -->
+                <section id="article8">
+                    <h2 class="section-title">
+                        <i class="fas fa-truck"></i>
+                        Article 8 : Livraison
+                    </h2>
+                    
+                    <h3 class="subsection-title">8.1 Prise en charge par jëndUp</h3>
+                    <p><strong>jëndUp assure lui-même la livraison</strong> des articles. Contrairement aux autres plateformes, nous nous chargeons de récupérer l'article chez le vendeur et de le livrer à l'acheteur.</p>
+                    
+                    <h3 class="subsection-title">8.2 Zone de livraison</h3>
+                    <p>La livraison est assurée exclusivement dans la région de Dakar. L'Acheteur sélectionne sa position exacte sur la carte interactive au moment de l'achat.</p>
+                    
+                    <h3 class="subsection-title">8.3 Délais</h3>
+                    <p>La livraison est effectuée dans les 48 heures ouvrées suivant la confirmation de la commande. Un livreur jëndUp contactera l'acheteur avant le passage.</p>
+                    
+                    <h3 class="subsection-title">8.4 Réception</h3>
+                    <p>L'Acheteur doit vérifier l'état de l'article au moment de la livraison. Toute réclamation doit être faite immédiatement au livreur.</p>
+                </section>
+
+                <!-- ARTICLE 10 : POLITIQUE DE REMBOURSEMENT -->
+                <section id="article9">
+                    <h2 class="section-title">
+                        <i class="fas fa-undo-alt"></i>
+                        Article 9 : Politique de remboursement
+                    </h2>
+                    
+                    <div class="refund-policy">
+                        <h3 class="refund-title">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Notre engagement remboursement
+                        </h3>
+                        
+                        <p>Chez jëndUp, nous prenons très au sérieux la satisfaction de nos acheteurs. Voici notre politique détaillée de remboursement :</p>
+                        
+                        <div class="refund-grid">
+                            <div class="refund-card success">
+                                <div class="refund-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h4>Article non livré</h4>
+                                <p>Si votre article n'est pas livré dans les délais impartis</p>
+                                <div class="refund-percent">100%</div>
+                                <p class="text-muted small">Remboursement intégral :</p>
+                                <ul class="list-unstyled">
+                                    <li>✓ Prix de l'article</li>
+                                    <li>✓ Frais de protection</li>
+                                    <li>✓ Frais de livraison</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="refund-card success">
+                                <div class="refund-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h4>Article non conforme ou abîmé</h4>
+                                <p>Si l'article reçu ne correspond pas à la description ou est endommagé</p>
+                                <div class="refund-percent">100%</div>
+                                <p class="text-muted small">Remboursement intégral :</p>
+                                <ul class="list-unstyled">
+                                    <li>✓ Prix de l'article</li>
+                                    <li>✓ Frais de protection</li>
+                                    <li>✓ Frais de livraison</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="refund-card success">
+                                <div class="refund-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <h4>Article contrefait ou frauduleux</h4>
+                                <p>Si l'article s'avère être une contrefaçon ou une fraude</p>
+                                <div class="refund-percent">100%</div>
+                                <p class="text-muted small">Remboursement intégral :</p>
+                                <ul class="list-unstyled">
+                                    <li>✓ Prix de l'article</li>
+                                    <li>✓ Frais de protection</li>
+                                    <li>✓ Frais de livraison</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="refund-card warning">
+                                <div class="refund-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <h4>Simple changement d'avis</h4>
+                                <p>Si vous changez d'avis sans défaut de l'article</p>
+                                <div class="refund-percent" style="color: #ffc107;">Partiel</div>
+                                <ul class="list-unstyled">
+                                    <li>✓ 2/3 du Prix de l'article</li>
+                                    <li>✗ Frais de protection</li>
+                                    <li>✗ Frais de livraison</li>
+                                </ul>
+                                <p class="text-muted small mt-2">Les frais de protection et de livraison ne sont pas remboursés</p>
+                            </div>
+                        </div>
+                        
+                        <div class="refund-note">
+                            <i class="fas fa-info-circle fa-2x me-3 float-start"></i>
+                            <p class="mb-0"><strong>En résumé :</strong> Vous êtes remboursé à 100% (article + frais de protection + livraison) si le problème est réel : non-livraison, article abîmé, non conforme ou frauduleux. En cas de simple changement d'avis sans défaut, seuls 2/3 du prix de l'article est remboursé.</p>
+                        </div>
+                        
+                        <h4 class="mt-4">📋 Procédure de remboursement</h4>
+                        <ol>
+                            <li>Contactez notre service client dans les 48h suivant la livraison</li>
+                            <li>Fournissez votre code de commande et des photos du problème (si applicable)</li>
+                            <li>Notre équipe traite votre demande sous 24-48h</li>
+                            <li>Le remboursement est effectué en espèce ou sur votre compte Wave ou Orange Money</li>
+                        </ol>
+                        
+                        <div class="highlight-box mt-3">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>Délai de traitement :</strong> Les remboursements sont effectués sous 3 à 5 jours ouvrés après validation.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ARTICLE 11 : GARANTIES -->
+                <section id="article10">
+                    <h2 class="section-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Article 10 : Garanties
+                    </h2>
+                    
+                    <h3 class="subsection-title">10.1 Garantie jëndUp</h3>
+                    <p>Grâce à nos frais de protection, jëndUp garantit à l'acheteur :</p>
+                    <ul>
+                        <li>La conformité de l'article avec l'annonce</li>
+                        <li>La livraison effective dans les délais</li>
+                        <li>Le remboursement en cas de problème</li>
+                    </ul>
+                    
+                    <h3 class="subsection-title">10.2 Garantie des vices cachés</h3>
+                    <p>Le Vendeur est tenu de la garantie des vices cachés. Si le bien présente un défaut non apparent au moment de la vente, jëndUp procédera au remboursement intégral après constatation.</p>
+                    
+                    <h3 class="subsection-title">10.3 Exclusion</h3>
+                    <p>Les défauts clairement indiqués dans l'annonce ne peuvent donner lieu à un remboursement.</p>
+                </section>
+
+                <!-- ARTICLE 12 : LITIGES -->
+                <section id="article11">
+                    <h2 class="section-title">
+                        <i class="fas fa-gavel"></i>
+                        Article 11 : Litiges
+                    </h2>
+                    
+                    <p>En cas de litige, jëndUp agit en tant que médiateur grâce à notre équipe dédiée. Notre décision est prise dans un délai de 72h.</p>
+                    <p>Les présentes CGU sont soumises au droit sénégalais. Tout litige relatif à leur exécution sera de la compétence exclusive des tribunaux de Dakar.</p>
+                </section>
+
+                <!-- ARTICLE 13 : DONNÉES PERSONNELLES -->
+                <section id="article12">
+                    <h2 class="section-title">
+                        <i class="fas fa-lock"></i>
+                        Article 12 : Données personnelles
+                    </h2>
+                    
+                    <p>jëndUp collecte les données nécessaires au fonctionnement du service : nom, email, téléphone, historique des transactions.</p>
+                </section>
+
+                <!-- ARTICLE 14 : PROPRIÉTÉ INTELLECTUELLE -->
+                <section id="article13">
+                    <h2 class="section-title">
+                        <i class="fas fa-copyright"></i>
+                        Article 13 : Propriété intellectuelle
+                    </h2>
+                    
+                    <p>L'ensemble des éléments de la Plateforme (textes, graphismes, logo, icônes) sont la propriété exclusive de jëndUp.</p>
+                </section>
+
+                <!-- ARTICLE 15 : MODIFICATION DES CGU -->
+                <section id="article14">
+                    <h2 class="section-title">
+                        <i class="fas fa-edit"></i>
+                        Article 14 : Modification des CGU
+                    </h2>
+                    
+                    <p>jëndUp se réserve le droit de modifier les CGU. Les utilisateurs seront informés par email des modifications substantielles.</p>
+                </section>
+
+                <!-- Section récapitulative des remboursements -->
+                <div class="highlight-box text-center mt-5" style="background: linear-gradient(135deg, var(--refund-green), #c3e6cb); border-left-color: #28a745;">
+                    <i class="fas fa-hand-holding-usd fa-3x mb-3" style="color: #155724;"></i>
+                    <h4 style="color: #155724;">Récapitulatif de notre politique de remboursement</h4>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5 style="color: #155724;">✅ Remboursement intégral</h5>
+                            <ul class="text-start">
+                                <li>Article non livré</li>
+                                <li>Article abîmé ou non conforme</li>
+                                <li>Article contrefait ou frauduleux</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 style="color: #856404;">⚠️ Remboursement partiel</h5>
+                            <ul class="text-start">
+                                <li>Simple changement d'avis (article en bon état)</li>
+                                <li>Seul 2/3 du prix de l'article est remboursé</li>
+                                <li>Les frais de protection et livraison restent acquis</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liens footer -->
+                <div class="footer-links">
+                    <a href="home.html"><i class="fas fa-home me-1"></i>Accueil</a>
+                    <a href="annonces.html"><i class="fas fa-search me-1"></i>Annonces</a>
+                    <a href="vendre.html"><i class="fas fa-plus-circle me-1"></i>Vendre</a>
+                    <a href="contact.html"><i class="fas fa-envelope me-1"></i>Contact</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        // Script pour le bouton retour en haut
+        const btnTop = document.getElementById('btnTop');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                btnTop.classList.add('show');
+            } else {
+                btnTop.classList.remove('show');
+            }
+        });
+        
+        btnTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Script pour les ancres en douceur
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

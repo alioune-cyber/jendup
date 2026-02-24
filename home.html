@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>jëndUp - Vendez vos objets d'occasion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Une seule balise pour le manifeste -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Une seule balise pour l'icône Apple -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <!-- Couleur du thème -->
+  <meta name="theme-color" content="#4361ee">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Favicon de base -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+
+
+  <!-- Description (150-160 caractères) -->
+  <meta name="description" content="jëndUp est la plateforme de vente d'occasion entre particuliers. Donnez une seconde vie à vos objets, vendez facilement et faites de bonnes affaires.">
+
+  <!-- Mots-clés simples -->
+  <meta name="keywords" content="vente occasion, achat occasion, jendup, vendre en ligne, articles d'occasion">
+
+  <!-- Auteur -->
+  <meta name="author" content="jëndUp">
+
+  <!-- Indexation -->
+  <meta name="robots" content="index, follow">
+
+  <!-- URL canonique -->
+  <link rel="canonical" href="https://jendup.shop/">
+
+  <!-- Pour les réseaux sociaux (simple) -->
+  <meta property="og:title" content="jëndUp - Vente d'occasion">
+  <meta property="og:description" content="Donnez une seconde vie à vos objets. Plateforme de vente d'occasion entre particuliers.">
+  <meta property="og:url" content="https://jendup.shop">
+  <meta property="og:site_name" content="jëndUp">
+
+  <!-- Pour Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="jëndUp">
+  <meta name="twitter:description" content="Plateforme de vente d'occasion entre particuliers">
+
+
+  <!-- CSS Personnalisé -->
+  <style>
+    body { 
+      background: #f8f9fa; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .navbar-brand { 
+      font-weight: bold; 
+      font-size: 24px; 
+      color: #4361ee !important; 
+    }
+    
+    .category-card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+      background: #fff;
+    }
+
+    .category-card:hover { 
+      transform: scale(1.05); 
+      box-shadow: 0px 4px 15px rgba(67, 97, 238, 0.2); 
+      border-color: #4361ee;
+    }
+    
+    .product-card {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      transition: all 0.2s;
+      position: relative;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0px 8px 20px rgba(0,0,0,0.1); 
+    }
+
+    .product-card img { 
+      width: 100%; 
+      height: 200px; 
+      object-fit: cover; 
+      transition: transform 0.2s;
+    }
+    
+    .product-card:hover img {
+      transform: scale(1.05);
+    }
+
+    .product-card .p-3 {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card h6 {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .product-card p {
+      margin-bottom: 12px;
+    }
+
+    /* Badge occasion */
+    .badge-occasion {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff6b6b;
+      color: white;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    .badge-etat {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #4361ee;
+      color: white;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    /* Styles pour le menu utilisateur */
+    .user-menu {
+      position: relative;
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 15px;
+      min-width: 250px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .user-dropdown.show {
+      display: block;
+    }
+
+    .user-info {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .user-email {
+      font-weight: bold;
+      color: #4361ee;
+      word-break: break-all;
+    }
+
+    .user-name {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .dropdown-link {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 4px;
+      color: #333;
+      text-decoration: none;
+      cursor: pointer;
+      margin-bottom: 5px;
+      transition: all 0.2s;
+    }
+
+    .dropdown-link:hover {
+      background-color: #f0f2ff;
+      color: #4361ee;
+      transform: translateX(5px);
+    }
+
+    .dropdown-link i {
+      width: 20px;
+      margin-right: 8px;
+    }
+
+    .btn-deconnexion {
+      width: 100%;
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+
+    .btn-deconnexion:hover {
+      background: #c82333;
+    }
+
+    footer { 
+      background: #2c3e50; 
+      color: white; 
+      padding: 40px 0 20px; 
+      margin-top: 50px;
+    }
+
+    footer a {
+      color: white;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    footer a:hover {
+      opacity: 0.8;
+      color: white;
+    }
+
+    /* Section "Comment ça marche" */
+    .how-it-works {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 0;
+      margin: 40px 0;
+    }
+
+    .step-card {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .step-icon {
+      width: 80px;
+      height: 80px;
+      background: #e8f0fe;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      color: #4361ee;
+      font-size: 32px;
+    }
+
+    /* Section FAQ */
+    .faq-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 16px;
+      padding: 40px 0;
+      margin: 40px 0;
+    }
+
+    .faq-title {
+      color: #2c3e50;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .accordion-button {
+      background-color: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px !important;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #2c3e50;
+      padding: 15px 20px;
+    }
+
+    .accordion-button:not(.collapsed) {
+      background-color: #4361ee;
+      color: white;
+      border-color: #4361ee;
+    }
+
+    .accordion-button:focus {
+      box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    }
+
+    .accordion-body {
+      background-color: white;
+      border: 1px solid #e9ecef;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 20px;
+    }
+
+    .btn-primary {
+      background-color: #4361ee;
+      border-color: #4361ee;
+    }
+
+    .btn-primary:hover {
+      background-color: #3451d1;
+      border-color: #3451d1;
+    }
+
+    .btn-outline-primary {
+      color: #4361ee;
+      border-color: #4361ee;
+    }
+
+    .btn-outline-primary:hover {
+      background-color: #4361ee;
+      border-color: #4361ee;
+    }
+
+    .text-primary {
+      color: #4361ee !important;
+    }
+
+    /* Prix en FCFA */
+    .prix {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #4361ee;
+    }
+
+    .ancien-prix {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 0.9rem;
+      margin-left: 8px;
+    }
+
+    /* Filtres */
+    .filter-section {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .btn-vendre {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-vendre:hover {
+      background: #ff5252;
+      transform: scale(1.05);
+      color: white;
+    }
+
+    .loading-message {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6c757d;
+    }
+
+    .empty-message i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      color: #dee2e6;
+    }
+
+    /* ===== CAROUSEL ULTRA AGRANDI ===== */
+    /* Container principal */
+    .carousel {
+      height: 100vh;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Conteneur interne */
+    .carousel-inner {
+      height: 100%;
+      width: 100%;
+    }
+    
+    /* Chaque slide */
+    .carousel-item {
+      height: 100%;
+      width: 100%;
+    }
+    
+    /* Contenu du slide avec l'image en background */
+    .carousel-slide-content {
+      height: 100% !important;
+      width: 100% !important;
+      background-size: cover !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: relative;
+    }
+    
+    /* Overlay sombre pour meilleure lisibilité du texte */
+    .carousel-slide-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1;
+    }
+    
+    /* Conteneur du texte */
+    .carousel-slide-content .container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 1200px;
+      padding: 0 20px;
+    }
+    
+    /* Styles des contrôles */
+    .carousel-control-prev,
+    .carousel-control-next {
+      width: 5%;
+      opacity: 0.9;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+    
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+      opacity: 1;
+      background: rgba(0,0,0,0.2);
+    }
+    
+    .carousel-indicators {
+      bottom: 30px;
+      z-index: 10;
+    }
+    
+    .carousel-indicators button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin: 0 6px;
+      background-color: rgba(255,255,255,0.5);
+    }
+    
+    .carousel-indicators .active {
+      background-color: white;
+      transform: scale(1.2);
+    }
+    
+    /* Styles responsifs */
+    @media (max-width: 768px) {
+      .carousel {
+        height: 100vh;
+      }
+      
+      .carousel-slide-content h2 {
+        font-size: 2rem !important;
+      }
+      
+      .carousel-slide-content p {
+        font-size: 1.2rem !important;
+      }
+      
+      .carousel-control-prev,
+      .carousel-control-next {
+        width: 10%;
+      }
+      
+      .carousel-indicators {
+        bottom: 20px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .carousel-slide-content h2 {
+        font-size: 1.5rem !important;
+      }
+      
+      .carousel-slide-content p {
+        font-size: 1rem !important;
+      }
+      
+      .carousel-slide-content .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+    }
+    
+    /* ===== AJOUTS MOBILES EXISTANTS ===== */
+    @media (max-width: 768px) {
+      /* Header plus compact */
+      .navbar-brand {
+        font-size: 20px;
+      }
+      
+      .btn-vendre {
+        padding: 6px 12px;
+        font-size: 14px;
+      }
+      
+      .btn-vendre i {
+        margin-right: 4px;
+      }
+      
+      /* Menu burger amélioré */
+      .navbar-collapse {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+      
+      .navbar-collapse .d-flex {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px !important;
+      }
+      
+      /* Filtres en ligne avec défilement horizontal */
+      .filter-section {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+      
+      .filter-section h4 {
+        margin-bottom: 12px !important;
+        font-size: 1.1rem;
+      }
+      
+      .filter-section > div {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .filter-section .btn {
+        flex-shrink: 0;
+      }
+      
+      /* Produits en 2 colonnes */
+      .row.g-4 > [class*="col-"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+      
+      .product-card img {
+        height: 150px;
+      }
+      
+      .product-card .p-3 {
+        padding: 12px !important;
+      }
+      
+      .product-card h6 {
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      
+      .product-card p {
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      
+      .prix {
+        font-size: 1rem;
+      }
+      
+      .badge-occasion, .badge-etat {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+      
+      /* Comment ça marche en ligne horizontale */
+      .how-it-works .row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 15px;
+        margin: 0 -10px;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .how-it-works .col-md-4 {
+        flex: 0 0 280px;
+        max-width: 280px;
+        padding: 0 10px;
+      }
+      
+      .step-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        height: 100%;
+      }
+      
+      .step-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        margin-bottom: 15px;
+      }
+      
+      .step-card h5 {
+        font-size: 1rem;
+      }
+      
+      .step-card p {
+        font-size: 0.85rem;
+      }
+      
+      /* Avantages en 2 colonnes */
+      .container.my-5 .row.g-3 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .container.my-5 .col-md-4 {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+      }
+      
+      .container.my-5 .text-center.p-4 {
+        padding: 15px !important;
+      }
+      
+      .container.my-5 i.fa-4x {
+        font-size: 2.5rem !important;
+        margin-bottom: 10px !important;
+      }
+      
+      .container.my-5 h6 {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+      }
+      
+      .container.my-5 p.small {
+        font-size: 0.75rem;
+      }
+      
+      /* FAQ plus compacte */
+      .faq-section {
+        padding: 30px 0;
+        margin: 30px 0;
+      }
+      
+      .faq-title {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+      }
+      
+      .accordion-button {
+        padding: 12px 15px;
+        font-size: 14px;
+      }
+      
+      .accordion-body {
+        padding: 15px;
+        font-size: 13px;
+      }
+      
+      /* CTA en colonne */
+      .bg-primary {
+        padding: 30px 20px !important;
+      }
+      
+      .bg-primary h3 {
+        font-size: 1.4rem;
+      }
+      
+      .bg-primary .lead {
+        font-size: 1rem;
+        margin-bottom: 20px !important;
+      }
+      
+      .bg-primary .btn {
+        display: block;
+        width: 100%;
+        margin: 10px 0 !important;
+      }
+      
+      .bg-primary .btn:first-child {
+        margin-bottom: 10px;
+      }
+      
+      /* Footer adapté */
+      footer {
+        padding: 30px 0 15px !important;
+      }
+      
+      footer .row > div {
+        margin-bottom: 25px;
+      }
+      
+      footer h5 {
+        font-size: 1.1rem;
+      }
+      
+      footer h6 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+      }
+      
+      footer ul {
+        font-size: 0.85rem;
+      }
+      
+      footer .d-flex {
+        justify-content: center;
+      }
+      
+      footer .fab {
+        font-size: 1.5rem !important;
+      }
+      
+      /* Dropdown utilisateur pour mobile */
+      .user-dropdown {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      
+      #btn-user {
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      
+      /* Ajustements container */
+      .container {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+    
+    /* Pour très petits écrans */
+    @media (max-width: 480px) {
+      .navbar-brand {
+        font-size: 18px;
+      }
+      
+      .btn-vendre {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+      
+      .product-card h6 {
+        font-size: 13px;
+      }
+      
+      .prix {
+        font-size: 0.9rem;
+      }
+      
+      .badge-occasion, .badge-etat {
+        font-size: 9px;
+        padding: 2px 6px;
+      }
+    }
+
+
+
+
+
+
+
+/* Style pour la bannière flottante */
+.install-banner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  background: linear-gradient(135deg, #4361ee, #764ba2);
+  color: white;
+  border-radius: 50px;
+  box-shadow: 0 10px 30px rgba(67, 97, 238, 0.3);
+  z-index: 9999;
+  animation: slideDown 0.5s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: none; /* Caché par défaut */
+}
+
+@keyframes slideDown {
+  from {
+    top: -100px;
+    opacity: 0;
+  }
+  to {
+    top: 20px;
+    opacity: 1;
+  }
+}
+
+.install-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  gap: 15px;
+}
+
+.install-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.install-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.install-text strong {
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.install-text span {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.install-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-install {
+  background: white;
+  color: #4361ee;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btn-install:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Animation de disparition */
+.install-banner.hiding {
+  animation: slideUp 0.5s ease forwards;
+}
+
+@keyframes slideUp {
+  to {
+    top: -100px;
+    opacity: 0;
+  }
+}
+
+/* Version mobile */
+@media (max-width: 768px) {
+  .install-banner {
+    top: 10px;
+    width: 95%;
+    border-radius: 30px;
+  }
+  
+  .install-banner-content {
+    padding: 10px 15px;
+  }
+  
+  .install-text span {
+    display: none; /* Cache le sous-titre sur mobile */
+  }
+  
+  .btn-install {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="home.html"><i class="fas fa-exchange-alt me-2 text-primary"></i><span style="color: black;">jënd</span>Up</a>
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <div class="mx-auto d-flex gap-3">
+        <a href="home.html" class="text-decoration-none text-dark fw-bold">Accueil</a>
+        <a href="annonces.html" class="text-decoration-none text-dark">Toutes les annonces</a>
+        <a href="#comment-ca-marche" class="text-decoration-none text-dark">Comment ça marche</a>
+        <a href="contact.html" class="text-decoration-none text-primary fw-bold">Contact</a>
+      </div>
+    </div>
+    
+    <div class="d-flex align-items-center">
+      <!-- Bouton vendre avec badge -->
+      <a href="vendre.html" class="btn btn-vendre me-3 position-relative" id="btn-vendre-notif">
+        <i class="fa fa-plus-circle me-1"></i>Vendre
+        <span id="commandes-en-attente" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; display: none;">
+          0
+        </span>
+      </a>
+      
+      <!-- Zone utilisateur connecté (cachée par défaut) -->
+      <div class="user-menu">
+        <button id="btn-user" class="btn btn-outline-primary d-none">
+          <i class="fa fa-user"></i>
+          <span id="user-name"></span>
+        </button>
+        <div id="user-dropdown" class="user-dropdown">
+          <div class="user-info">
+            <div class="user-email" id="dropdown-email"></div>
+            <div class="user-name" id="dropdown-name"></div>
+            <div class="text-muted small" id="dropdown-telephone"></div>
+          </div>
+          <a href="mes-produits.html" class="dropdown-link">
+            <i class="fa fa-list"></i> Mes annonces
+          </a>
+          <a href="historique_commande.html" class="dropdown-link">
+            <i class="fa fa-history"></i> Historique des achats
+          </a>
+          <button class="btn-deconnexion" id="btn-deconnexion">
+            <i class="fa fa-sign-out-alt"></i> Déconnexion
+          </button>
+        </div>
+      </div>
+      
+      <!-- Bouton connexion (visible par défaut) -->
+      <a href="connexion.html" class="btn btn-outline-primary" id="btn-connexion">
+        <i class="fa fa-sign-in-alt me-1"></i>Connexion
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- BANNIERE - CAROUSEL PLEIN ÉCRAN -->
+<div id="carouselExample" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+  <!-- Indicateurs -->
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="2" aria-label="Slide 3"></button>
+  </div>
+
+  <div class="carousel-inner">
+    <!-- Slide 1 -->
+    <div class="carousel-item active">
+      <div class="carousel-slide-content" style="
+          background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('slide_1.png');
+      ">
+        <div class="container text-center text-white">
+          <h2 style="font-size: clamp(2.5rem, 6vw, 4rem); font-weight: bold; margin-bottom: 1rem;">
+            ♻️ Donnez une seconde vie à vos objets
+          </h2>
+          <p style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); margin-bottom: 2rem;">
+            Vendez ce qui ne vous sert plus et gagnez de l'argent
+          </p>
+          <div>
+            <a href="vendre.html" class="btn btn-primary btn-lg me-2">Vendre maintenant</a>
+            <a href="#produits" class="btn btn-outline-light btn-lg">Découvrir</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="carousel-item">
+      <div class="carousel-slide-content" style="
+          background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('slide_2.png');
+      ">
+        <div class="container text-center text-white">
+          <h2 style="font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: bold; margin-bottom: 1rem;">
+            🌍 Participez à l'économie circulaire
+          </h2>
+          <p style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); margin-bottom: 2rem;">
+            Chaque objet compte pour réduire les déchets
+          </p>
+          <p class="lead fs-3">+ de 1000 objets déjà recyclés</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="carousel-item">
+      <div class="carousel-slide-content" style="
+          background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('slide_3.png');
+      ">
+        <div class="container text-center text-white">
+          <h2 style="font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: bold; margin-bottom: 1rem;">
+            💰 Faites de bonnes affaires
+          </h2>
+          <p style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); margin-bottom: 2rem;">
+            Achetez des articles de qualité à petits prix
+          </p>
+          <p class="lead fs-3">Jusqu'à 70% moins cher que le neuf</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contrôles de navigation -->
+  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Précédent</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Suivant</span>
+  </button>
+</div>
+
+<!-- SECTION COMMENT ÇA MARCHE -->
+<section id="comment-ca-marche" class="how-it-works">
+  <div class="container">
+    <h3 class="text-center mb-5">Comment ça marche ?</h3>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fa fa-camera"></i>
+          </div>
+          <h5>1. Publiez votre annonce</h5>
+          <p class="text-muted">Prenez une photo de l'objet, décrivez son état et fixez votre prix. C'est gratuit !</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fa fa-hand-holding-usd"></i>
+          </div>
+          <h5>2. Vendez et gagnez</h5>
+          <p class="text-muted">Remettez l'objet et recevez votre paiement. C'est simple et rapide !</p>
+          
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fa fa-truck"></i>
+          </div>
+          <h5>3. Nous gérons la livraison</h5>
+          <p class="text-muted">Remettez nous le colis, on s'occupe de le livrer pour vous gratuitement</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FILTRES RAPIDES -->
+<div class="container mt-4" id="produits">
+  <div class="filter-section d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">Annonces récentes</h4>
+    <div>
+      <button class="btn btn-sm btn-outline-primary me-2 filter-btn active" data-filter="tous">Tous</button>
+      <button class="btn btn-sm btn-outline-primary me-2 filter-btn" data-filter="electronique">Électronique</button>
+      <button class="btn btn-sm btn-outline-primary me-2 filter-btn" data-filter="mode">Mode</button>
+      <button class="btn btn-sm btn-outline-primary me-2 filter-btn" data-filter="maison">Maison</button>
+      <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="loisirs">Loisirs</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUITS EN VENTE -->
+<div class="container my-4">
+  <div class="row g-4" id="produits-container">
+    <div class="col-12 text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2">Chargement des annonces...</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION AVANTAGES -->
+<section class="container my-5">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="text-center p-4">
+        <i class="fa fa-shield-alt fa-4x text-primary mb-4"></i>
+        <h6>Paiement sécurisé</h6>
+        <p class="small text-muted">Paiement uniquement à la remise du produit</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="text-center p-4">
+        <i class="fa fa-star fa-4x text-primary mb-4"></i>
+        <h6>Système de confiance</h6>
+        <p class="small text-muted">livraison sous 24-48h</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="text-center p-4">
+        <i class="fa fa-clock fa-4x text-primary mb-4"></i>
+        <h6>Annonces vérifiées</h6>
+        <p class="small text-muted">Modération pour plus de sécurité</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION FAQ -->
+<section class="faq-section">
+  <div class="container">
+    <h2 class="faq-title">Questions Fréquentes</h2>
+    <div class="accordion" id="faqAccordion">
+
+      <!-- Question 1 -->
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+            <i class="fas fa-money-bill-wave faq-icon me-2"></i>
+            Est-ce vraiment gratuit pour vendre ?
+          </button>
+        </h2>
+        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Oui, la mise en vente est totalement gratuite ! Vous pouvez publier jusqu'à 5 annonces gratuitement.
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 2 -->
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+            <i class="fas fa-handshake faq-icon me-2"></i>
+            Que se passe-t-il après avoir passé une commande ?
+          </button>
+        </h2>
+        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Après avoir passé votre commande :<br>
+            • Le colis est récupéré par nos équipes auprès du vendeur. Le vendeur doit être disponible et le colis prêt entre <strong>8h et 18h</strong>.<br>
+            • Ensuite, le colis est livré à l'acheteur.<br>
+            • L'acheteur doit montrer le <strong>code du colis</strong> (disponible dans la page <em>Historique des achats</em>) au livreur pour confirmer que c’est bien son colis.<br>
+            • Assurez-vous que le colis est complet et en bon état avant de valider la réception.<br>
+            • Après paiement par l'acheteur (wave, orange money ou espèce), l'argent sera envoyé au vendeur par nos equipes par espèce ou par mobile money.
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Question 3 -->
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+            <i class="fas fa-camera faq-icon me-2"></i>
+            Comment bien photographier mon objet ?
+          </button>
+        </h2>
+        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Pour une vente rapide :<br>
+            • Prenez plusieurs photos sous différents angles<br>
+            • Photographiez les défauts éventuels<br>
+            • Utilisez un fond neutre et un bon éclairage<br>
+            • Montrez l'objet en situation si possible<br>
+            Les annonces avec photos de qualité se vendent 3x plus vite !
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 4 -->
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+            <i class="fas fa-shield-alt faq-icon me-2"></i>
+            Comment se passe la livraison ?
+          </button>
+        </h2>
+        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            JëndUp se charge de la livraison du colis du vendeur vers l'acheteur mais les frais de livraison sont payés par l'acheteur.
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 5 -->
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+            <i class="fas fa-exchange-alt faq-icon me-2"></i>
+            Puis-je échanger plutôt que vendre ?
+          </button>
+        </h2>
+        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Non, la plateforme est conçue pour la vente.
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 6 -->
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+            <i class="fas fa-clock faq-icon me-2"></i>
+            Combien de temps mon annonce reste-t-elle en ligne ?
+          </button>
+        </h2>
+        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            Les annonces restent en ligne pendant 30 jours. Passé ce délai, vous recevrez un email pour la remettre en ligne si l'objet n'est pas vendu.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- APPEL À L'ACTION -->
+<section class="container my-5">
+  <div class="bg-primary text-white p-5 rounded-4 text-center">
+    <h3>Prêt à vendre vos objets ?</h3>
+    <p class="lead mb-4">Rejoignez notre communauté et donnez une seconde vie à vos affaires</p>
+    <a href="vendre.html" class="btn btn-light btn-lg me-2">Publier une annonce</a>
+    <a href="inscription.html" class="btn btn-outline-light btn-lg">Créer un compte</a>
+  </div>
+</section>
+
+
+
+<!-- Bannière flottante d'installation PWA -->
+<div id="install-banner" class="install-banner">
+  <div class="install-banner-content">
+    <div class="install-icon">
+      <i class="fas fa-download"></i>
+    </div>
+    <div class="install-text">
+      <strong>Installer jëndUp</strong>
+      <span>Installez notre application pour une meilleure expérience</span>
+    </div>
+    <div class="install-actions">
+      <button id="install-pwa" class="btn-install" onclick="installPWA()">
+        <i class="fas fa-download me-1"></i>Installer
+      </button>
+      <button class="btn-close" onclick="closeInstallBanner()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <h5><i class="fas fa-exchange-alt me-2"></i>jëndUp</h5>
+        <p>La plateforme de vente d'occasion entre particuliers. Donnez une seconde vie à vos objets et faites de bonnes affaires !</p>
+        <div class="d-flex gap-3 mt-3">
+          <a href="https://wa.me/763206226" target="_blank" aria-label="Whatsapp">
+            <i class="fab fa-whatsapp fa-2x"></i>
+          </a>
+          <a href="https://instagram.com/jëndUp" target="_blank" aria-label="Instagram">
+            <i class="fab fa-instagram fa-2x"></i>
+          </a>
+
+        </div>
+      </div>
+      <div class="col-md-2 mb-4">
+        <h6>Navigation</h6>
+        <ul class="list-unstyled">
+          <li><a href="home.html">Accueil</a></li>
+          <li><a href="annonces.html?cat=tous">Toutes les annonces</a></li>
+          <li><a href="vendre.html">Vendre</a></li>
+          <li><a href="#comment-ca-marche">Comment ça marche</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h6>Légal</h6>
+        <ul class="list-unstyled">
+          <li><a href="cgv.html">Conditions générales</a></li>
+          <li><a href="confidentialite.html">Politique de confidentialité</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h6>Contact</h6>
+        <ul class="list-unstyled">
+          <li><i class="fa fa-map-marker-alt me-2"></i>Dakar, Sénégal</li>
+          <li><i class="fa fa-phone me-2"></i>+221 76 320 62 26</li>
+          <li><i class="fa fa-envelope me-2"></i><a href="mailto:jendup@gmail.com">jendup@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="bg-white opacity-25">
+    <div class="text-center small">
+      <p>© 2026 jëndUp - Tous droits réservés</p>
+    </div>
+  </div> 
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+</body>
+</html>

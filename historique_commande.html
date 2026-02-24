@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique des Commandes - jëndUp</title>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+        <!-- Favicon de base -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    
+    <style>
+        :root {
+            --primary-blue: #4361ee;
+            --secondary-purple: #764ba2;
+            --light-bg: #f8f9fa;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --text-color: #333;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple)) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        
+        .page-title {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .commande-card {
+            background: var(--light-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            overflow: hidden;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .commande-card.selected {
+            border-color: var(--danger-red);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+            transform: scale(1.01);
+        }
+        
+        .commande-header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .commande-header .date {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .commande-header .code {
+            font-family: monospace;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        
+        .commande-body {
+            padding: 20px;
+        }
+        
+        .produit-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+            gap: 15px;
+        }
+        
+        .produit-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .produit-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        
+        .produit-info {
+            flex: 1;
+        }
+        
+        .produit-nom {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+            font-size: 1.1rem;
+        }
+        
+        .produit-prix {
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .badge-etat {
+            padding: 6px 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        
+        .etat-livraison {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .etat-livree {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .etat-annulee {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .etat-cours {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .total-commande {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+        
+        .frais-details {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .checkbox-custom {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            border: 2px solid var(--primary-blue);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .checkbox-custom:checked {
+            background-color: var(--danger-red);
+            border-color: var(--danger-red);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+        }
+        
+        .delete-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            animation: bounceIn 0.5s;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .btn-delete {
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .btn-delete:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-annuler {
+            background: var(--warning-yellow);
+            color: #333;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-annuler:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .btn-annuler:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .selection-count {
+            background: white;
+            color: var(--danger-red);
+            border-radius: 20px;
+            padding: 2px 8px;
+            margin-left: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+        
+        .spinner-border.text-primary {
+            color: var(--primary-blue) !important;
+        }
+        
+        .info-livraison {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .info-livraison i {
+            margin-right: 5px;
+            color: var(--primary-blue);
+        }
+        
+        .coordonnees {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .coordonnees i {
+            width: 20px;
+            color: var(--primary-blue);
+        }
+        
+        .role-badge {
+            font-size: 0.8rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: var(--light-bg);
+            color: var(--text-color);
+            margin-left: 10px;
+        }
+
+        /* Styles pour le menu utilisateur */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            min-width: 250px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-info {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-email {
+            font-weight: bold;
+            color: var(--primary-blue);
+            word-break: break-all;
+        }
+
+        .dropdown-link {
+            display: block;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-link:hover {
+            background-color: #f0f2ff;
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+
+        .dropdown-link i {
+            width: 20px;
+            margin-right: 8px;
+        }
+
+        .btn-deconnexion {
+            width: 100%;
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-deconnexion:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="home.html">
+                <i class="fas fa-exchange-alt me-2"></i><span style="color: black;">jënd</span>Up
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="mx-auto">
+                    <span class="text-white">Historique des commandes</span>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-menu">
+                    <button id="btn-user" class="btn btn-outline-light d-none position-relative">
+                        <i class="fa fa-user me-1"></i>
+                        <span id="user-name"></span>
+                    </button>
+                    <div id="user-dropdown" class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-email" id="dropdown-email"></div>
+                            <div class="user-name" id="dropdown-name"></div>
+                            <div class="small text-muted" id="dropdown-telephone"></div>
+                        </div>
+                        <a href="vendre.html" class="dropdown-link">
+                            <i class="fa fa-plus-circle"></i> Vendre un article
+                        </a>
+                        <a href="mes-produits.html" class="dropdown-link">
+                            <i class="fa fa-box"></i> Mes produits
+                        </a>
+                        <a href="historique-ventes.html" class="dropdown-link">
+                            <i class="fa fa-history"></i> Historique ventes
+                        </a>
+                        <a href="historique-commandes.html" class="dropdown-link">
+                            <i class="fa fa-shopping-bag"></i> Mes achats
+                        </a>
+                        <button class="btn-deconnexion" id="btn-deconnexion">
+                            <i class="fa fa-sign-out-alt"></i> Déconnexion
+                        </button>
+                    </div>
+                    <a href="connexion.html" class="btn btn-outline-light" id="btn-connexion">
+                        <i class="fa fa-sign-in-alt me-1"></i> Connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="container">
+        <div class="main-container">
+            <h1 class="page-title">
+                <i class="fas fa-history me-2"></i>
+                Historique des Commandes
+            </h1>
+
+            <!-- Indicateur de chargement -->
+            <div id="loadingIndicator" class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <span class="ms-3 text-muted">Chargement de vos commandes...</span>
+            </div>
+
+            <!-- État vide -->
+            <div id="emptyState" class="empty-state d-none">
+                <i class="fas fa-shopping-bag"></i>
+                <h3 class="mb-3">Aucune commande trouvée</h3>
+                <p class="text-muted mb-4">Vous n'avez pas encore passé de commandes.</p>
+                <a href="annonces.html" class="btn btn-primary">
+                    <i class="fas fa-store me-2"></i>Découvrir des produits
+                </a>
+            </div>
+
+            <!-- Liste des commandes -->
+            <div id="commandesContainer" class="d-none"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Script JS principal -->
+    <script src="script.js"></script>
+</body>
+</html>

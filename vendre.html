@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendre un article - jëndUp</title>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Favicon de base -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <style>
+        :root {
+            --primary-blue: #4361ee;
+            --secondary-purple: #764ba2;
+            --light-bg: #f8f9fa;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --text-color: #333;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple)) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 800px;
+        }
+        
+        .page-title {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+        
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .image-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 3px solid var(--light-bg);
+            position: relative;
+        }
+        
+        .image-preview-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: var(--danger-red);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            border: 2px solid white;
+        }
+        
+        .remove-image:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary-blue);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .dashboard-menu {
+            background: white;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .dashboard-link {
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dashboard-link i {
+            color: var(--primary-blue);
+        }
+        
+        .dashboard-link:hover {
+            background: var(--light-bg);
+            color: var(--primary-blue);
+        }
+        
+        .dashboard-link.active {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+        }
+        
+        .dashboard-link.active i {
+            color: white;
+        }
+        
+        .info-badge {
+            background: var(--light-bg);
+            color: var(--primary-blue);
+            border-radius: 30px;
+            padding: 0.3rem 1rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .spinner-border.text-primary {
+            color: var(--primary-blue) !important;
+        }
+
+        /* 🔥 Styles pour la carte */
+        .card-localisation {
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+        
+        .card-header-localisation {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            padding: 1rem 1.5rem;
+        }
+        
+        .card-header-localisation h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .card-header-localisation i {
+            margin-right: 10px;
+        }
+        
+        .map-container {
+            height: 350px;
+            width: 100%;
+            z-index: 1;
+        }
+        
+        .coord-input {
+            background-color: var(--light-bg);
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .coord-input:read-only {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        
+        .btn-recenter {
+            background-color: white;
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-recenter:hover {
+            background-color: var(--primary-blue);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .geoloc-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-weight: 500;
+            color: var(--primary-blue);
+        }
+        
+        .geoloc-loading i {
+            margin-right: 10px;
+        }
+        
+        .alert-localisation {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="home.html">
+                <i class="fas fa-exchange-alt me-2"></i><span style="color: black;">jënd</span>Up
+            </a>
+            
+            <!--<div class="d-flex align-items-center">
+                <div class="user-menu">
+                    <button id="btn-user" class="btn btn-outline-light d-none position-relative">
+                        <i class="fa fa-user me-1"></i>
+                        <span id="user-name"></span>
+                    </button>
+                    <div id="user-dropdown" class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-email" id="dropdown-email"></div>
+                            <div class="user-name" id="dropdown-name"></div>
+                            <div class="small text-muted" id="dropdown-telephone"></div>
+                        </div>
+                        <a href="vendre.html" class="dropdown-link">
+                            <i class="fa fa-plus-circle"></i> Vendre un article
+                        </a>
+                        <a href="mes-produits.html" class="dropdown-link">
+                            <i class="fa fa-box"></i> Mes produits
+                        </a>
+                        <a href="historique-ventes.html" class="dropdown-link">
+                            <i class="fa fa-history"></i> Historique ventes
+                        </a>
+                        <a href="historique_commande.html" class="dropdown-link">
+                            <i class="fa fa-shopping-bag"></i> Mes achats
+                        </a>
+                        <button class="btn-deconnexion" id="btn-deconnexion">
+                            <i class="fa fa-sign-out-alt"></i> Déconnexion
+                        </button>
+                    </div>
+                    <a href="connexion.html" class="btn btn-outline-light" id="btn-connexion">
+                        <i class="fa fa-sign-in-alt me-1"></i> Connexion
+                    </a>
+                </div>
+            </div>-->
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="container">
+        <div class="main-container">
+            <!-- Menu dashboard -->
+            <div class="dashboard-menu">
+                <a href="vendre.html" class="dashboard-link active">
+                    <i class="fas fa-plus-circle"></i> Vendre
+                </a>
+                <a href="mes-produits.html" class="dashboard-link">
+                    <i class="fas fa-box"></i> Mes produits
+                </a>
+
+                <a href="historique-ventes.html" class="dashboard-link position-relative">
+                    <i class="fas fa-history"></i> Historique ventes
+                    <span id="commandes-ventes-attente" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; display: none;">
+                        0
+                    </span>
+                </a>
+            </div>
+
+            
+
+            <h1 class="page-title">
+                <i class="fas fa-plus-circle me-2"></i>
+                Publier un nouvel article
+            </h1>
+
+            <!-- Indicateur de limite de produits -->
+            <div id="productLimitInfo" class="info-badge mb-4">
+                <i class="fas fa-info-circle"></i>
+                <span id="productCount">Chargement...</span>
+            </div>
+
+            <!-- Formulaire de publication -->
+            <form id="vendreForm">
+                <!-- Titre -->
+                <div class="mb-3">
+                    <label for="titre" class="form-label">Titre de l'annonce *</label>
+                    <input type="text" class="form-control" id="titre" 
+                           placeholder="Ex: iPhone 12 128Go - Très bon état" 
+                           maxlength="255" required>
+                </div>
+
+                <!-- Catégorie -->
+                <div class="mb-3">
+                    <label for="categorie" class="form-label">Catégorie *</label>
+                    <select class="form-select" id="categorie" required>
+                        <option value="">Sélectionnez une catégorie</option>
+                        <option value="Électronique">📱 Électronique</option>
+                        <option value="Mode">👕 Mode</option>
+                        <option value="Maison">🏠 Maison</option>
+                        <option value="Loisirs">🎮 Loisirs</option>
+                        <option value="Sports">⚽ Sports</option>
+                        <option value="Véhicules">🚗 Véhicules</option>
+                        <option value="Autre">📦 Autre</option>
+                    </select>
+                </div>
+
+                <!-- Prix -->
+                <div class="mb-3">
+                    <label for="prix" class="form-label">Prix (FCFA) *</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="prix" 
+                               placeholder="Ex: 150000" min="100" step="100" required>
+                        <span class="input-group-text">FCFA</span>
+                    </div>
+                </div>
+
+                <!-- État -->
+                <div class="mb-3">
+                    <label for="etat" class="form-label">État *</label>
+                    <select class="form-select" id="etat" required>
+                        <option value="">Sélectionnez l'état</option>
+                        <option value="neuf">Neuf</option>
+                        <option value="très bon état">Très bon état</option>
+                        <option value="bon état">Bon état</option>
+                        <option value="état satisfaisant">État satisfaisant</option>
+                        <option value="à réparer">À réparer</option>
+                    </select>
+                </div>
+
+                <!-- Marque -->
+                <div class="mb-3">
+                    <label for="marque" class="form-label">Marque</label>
+                    <input type="text" class="form-control" id="marque" 
+                           placeholder="Ex: Apple, Samsung, Nike...">
+                </div>
+
+                <!-- Modèle -->
+                <div class="mb-3">
+                    <label for="modele" class="form-label">Modèle</label>
+                    <input type="text" class="form-control" id="modele" 
+                           placeholder="Ex: iPhone 12, Air Max 90...">
+                </div>
+
+                <!-- Couleur -->
+                <div class="mb-3">
+                    <label for="couleur" class="form-label">Couleur</label>
+                    <input type="text" class="form-control" id="couleur" 
+                           placeholder="Ex: Noir, Rouge, Bleu...">
+                </div>
+
+                <!-- Description -->
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description *</label>
+                    <textarea class="form-control" id="description" rows="5" 
+                              placeholder="Décrivez votre article en détail (état, défauts éventuels, accessoires fournis...)" 
+                              required></textarea>
+                </div>
+
+                <!-- Images -->
+                <div class="mb-3">
+                    <label class="form-label">Photos (max 5)</label>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <button type="button" class="btn btn-outline-primary" id="addImageBtn">
+                            <i class="fas fa-camera me-2"></i>Ajouter une photo
+                        </button>
+                        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Format: JPG, PNG - Max 5 Mo
+                        </small>
+                    </div>
+                    
+                    <!-- Prévisualisation des images -->
+                    <div id="imagePreviewContainer" class="image-preview-container"></div>
+                </div>
+
+                <!-- 🔥 Section Localisation du produit -->
+                <div class="card-localisation mb-4">
+                    <div class="card-header-localisation">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Localisation du produit
+                        </h5>
+                    </div>
+                    <div class="card-body p-3">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Indiquez où se trouve votre produit pour faciliter la livraison. 
+                            La carte se positionnera automatiquement sur votre position. 
+                            Vous pouvez déplacer le marqueur pour ajuster.
+                        </p>
+                        
+                        <!-- Conteneur de la carte (avec position relative pour le loading) -->
+                        <div style="position: relative;">
+                            <div id="mapVendre" class="map-container"></div>
+                        </div>
+                        
+                        <!-- Coordonnées sélectionnées -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Latitude</label>
+                                <input type="text" class="form-control form-control-sm coord-input" 
+                                       id="latitude" readonly placeholder="En attente...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Longitude</label>
+                                <input type="text" class="form-control form-control-sm coord-input" 
+                                       id="longitude" readonly placeholder="En attente...">
+                            </div>
+                        </div>
+                        
+                        <!-- Bouton recentrer -->
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn-recenter" onclick="recentrerCarteVendre()">
+                                <i class="fas fa-crosshairs me-2"></i>
+                                Recentrer sur ma position
+                            </button>
+                        </div>
+                        
+                        <!-- Zone pour les messages d'information -->
+                        <div id="localisationMessages" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Bouton de soumission -->
+                <button type="submit" class="btn btn-primary w-100 mt-4" id="submitBtn">
+                    <span id="submitText">Publier l'annonce</span>
+                    <span id="submitSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Leaflet JS pour la carte -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Script JS principal -->
+    <script src="script.js"></script>
+</body>
+</html>

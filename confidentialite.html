@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politique de Confidentialité - jëndUp</title>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Favicon de base -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <style>
+        :root {
+            --primary-blue: #4361ee;
+            --secondary-purple: #764ba2;
+            --light-bg: #f8f9fa;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --text-color: #333;
+            --border-color: #e9ecef;
+            --refund-green: #d4edda;
+            --refund-border: #c3e6cb;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1000px;
+        }
+        
+        .page-title {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+        
+        .page-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a);
+            border-radius: 2px;
+        }
+        
+        .last-update {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+        
+        .section-title {
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.5rem;
+            color: var(--secondary-purple);
+        }
+        
+        .subsection-title {
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 1.5rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            line-height: 1.7;
+            color: #4a5568;
+        }
+        
+        .content p {
+            margin-bottom: 1rem;
+        }
+        
+        .content ul, .content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        
+        .content li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .highlight-box {
+            background: var(--light-bg);
+            border-left: 4px solid var(--primary-blue);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        
+        .data-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .data-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.1);
+        }
+        
+        .data-card i {
+            font-size: 2rem;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+        
+        .data-card h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .table-of-contents {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .table-of-contents h4 {
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+        
+        .table-of-contents ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+        }
+        
+        .table-of-contents li {
+            margin-bottom: 0.3rem;
+        }
+        
+        .table-of-contents a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: inline-block;
+            padding: 0.3rem 0;
+        }
+        
+        .table-of-contents a:hover {
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+        
+        .table-of-contents a i {
+            margin-right: 8px;
+            color: var(--primary-blue);
+            font-size: 0.8rem;
+        }
+        
+        .badge-privacy {
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+        
+        .footer-links {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-blue);
+        }
+        
+        .btn-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--primary-blue), #ff8c5a);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            transition: all 0.3s;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
+        }
+        
+        .btn-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .btn-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+        
+        /* Menu utilisateur */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            min-width: 250px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-info {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-email {
+            font-weight: bold;
+            color: var(--primary-blue);
+            word-break: break-all;
+        }
+
+        .dropdown-link {
+            display: block;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-link:hover {
+            background-color: #fff1e8;
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+
+        .dropdown-link i {
+            width: 20px;
+            margin-right: 8px;
+        }
+
+        .btn-deconnexion {
+            width: 100%;
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-deconnexion:hover {
+            background: #c82333;
+        }
+        
+        .contact-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .contact-card i {
+            color: var(--primary-blue);
+            margin-right: 10px;
+        }
+        
+        .cookie-banner {
+            background: #333;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="home.html">
+                <i class="fas fa-exchange-alt me-2"></i><span style="color: black;">jënd</span>Up
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="mx-auto">
+                    <span class="text-white">Politique de Confidentialité</span>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-menu">
+                    <button id="btn-user" class="btn btn-outline-light d-none position-relative">
+                        <i class="fa fa-user me-1"></i>
+                        <span id="user-name"></span>
+                    </button>
+                    <div id="user-dropdown" class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-email" id="dropdown-email"></div>
+                            <div class="user-name" id="dropdown-name"></div>
+                            <div class="small text-muted" id="dropdown-telephone"></div>
+                        </div>
+                        <a href="vendre.html" class="dropdown-link">
+                            <i class="fa fa-plus-circle"></i> Vendre un article
+                        </a>
+                        <a href="mes-produits.html" class="dropdown-link">
+                            <i class="fa fa-box"></i> Mes produits
+                        </a>
+                        <a href="historique-ventes.html" class="dropdown-link">
+                            <i class="fa fa-history"></i> Historique ventes
+                        </a>
+                        <a href="historique-commandes.html" class="dropdown-link">
+                            <i class="fa fa-shopping-bag"></i> Mes achats
+                        </a>
+                        <button class="btn-deconnexion" id="btn-deconnexion">
+                            <i class="fa fa-sign-out-alt"></i> Déconnexion
+                        </button>
+                    </div>
+                    <a href="connexion.html" class="btn btn-outline-light" id="btn-connexion">
+                        <i class="fa fa-sign-in-alt me-1"></i> Connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Bouton retour en haut -->
+    <a href="#" class="btn-top" id="btnTop">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <!-- Contenu principal -->
+    <div class="container">
+        <div class="main-container">
+            <h1 class="page-title">
+                <i class="fas fa-lock me-2"></i>
+                Politique de Confidentialité
+            </h1>
+            
+            <div class="last-update">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Dernière mise à jour : 16 février 2026
+                <span class="badge-privacy">Version 1.0</span>
+            </div>
+
+            <!-- Table des matières -->
+            <div class="table-of-contents">
+                <h4><i class="fas fa-list me-2"></i>Sommaire</h4>
+                <ul>
+                    <li><a href="#intro"><i class="fas fa-chevron-right"></i> Introduction</a></li>
+                    <li><a href="#collecte"><i class="fas fa-chevron-right"></i> 1. Données collectées</a></li>
+                    <li><a href="#utilisation"><i class="fas fa-chevron-right"></i> 2. Utilisation des données</a></li>
+                    <li><a href="#partage"><i class="fas fa-chevron-right"></i> 3. Partage des données</a></li>
+                    <li><a href="#conservation"><i class="fas fa-chevron-right"></i> 4. Conservation des données</a></li>
+                    <li><a href="#securite"><i class="fas fa-chevron-right"></i> 5. Sécurité des données</a></li>
+                    <li><a href="#droits"><i class="fas fa-chevron-right"></i> 6. Vos droits</a></li>
+                </ul>
+            </div>
+
+            <div class="content">
+                <!-- INTRODUCTION -->
+                <section id="intro">
+                    <h2 class="section-title">
+                        <i class="fas fa-hand-peace"></i>
+                        Introduction
+                    </h2>
+                    
+                    <p>Chez <strong>jëndUp</strong> ("jënd" signifie "acheter" en wolof), nous accordons une importance capitale à la protection de vos données personnelles. La présente politique de confidentialité vous informe de la manière dont nous collectons, utilisons, partageons et protégeons vos informations lorsque vous utilisez notre plateforme.</p>
+                    
+                    <p>En utilisant jëndUp, vous confiez vos données à une équipe sénégalaise engagée à respecter votre vie privée. Nous nous conformons à la réglementation sénégalaise sur la protection des données et aux standards internationaux.</p>
+                    
+                    <div class="highlight-box">
+                        <i class="fas fa-check-circle me-2" style="color: var(--primary-blue);"></i>
+                        <strong>Notre engagement :</strong> Transparence totale sur l'utilisation de vos données.
+                    </div>
+                </section>
+
+                <!-- 1. DONNÉES COLLECTÉES -->
+                <section id="collecte">
+                    <h2 class="section-title">
+                        <i class="fas fa-database"></i>
+                        1. Données que nous collectons
+                    </h2>
+                    
+                    <p>Nous collectons différentes catégories de données pour assurer le bon fonctionnement de notre service :</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-user-circle"></i>
+                                <h4>Données d'identification</h4>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Nom et prénom</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Adresse email</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Numéro de téléphone</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Date de naissance</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <h4>Données de localisation</h4>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Position de livraison (Dakar)</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Adresse de livraison</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-credit-card"></i>
+                                <h4>Données de transaction</h4>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Historique des achats</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Historique des ventes</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Montants des transactions</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Codes uniques de commande</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-image"></i>
+                                <h4>Contenu publié</h4>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Photos des articles</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> Descriptions des annonces</li>
+                                    <li><i class="fas fa-check me-2" style="color: var(--success-green);"></i> État des articles</li>
+                                </ul>
+                            </div>
+                        </div>
+                </section>
+
+                <!-- 2. UTILISATION DES DONNÉES -->
+                <section id="utilisation">
+                    <h2 class="section-title">
+                        <i class="fas fa-tasks"></i>
+                        2. Utilisation de vos données
+                    </h2>
+                    
+                    <p>Nous utilisons vos données personnelles pour :</p>
+                    
+                    <ul>
+                        <li><strong>Fournir nos services :</strong> création et gestion de compte, publication d'annonces, traitement des commandes, livraison.</li>
+                        <li><strong>Assurer la sécurité :</strong> prévention de la fraude, vérification des identités, sécurisation des transactions.</li>
+                        <li><strong>Améliorer notre plateforme :</strong> analyse des performances, développement de nouvelles fonctionnalités, personnalisation de l'expérience.</li>
+                        <li><strong>Communiquer avec vous :</strong> notifications de commandes, mises à jour du service, réponses à vos demandes.</li>
+                        <li><strong>Respecter nos obligations légales :</strong> conservation des données pour les besoins légaux, réponse aux autorités compétentes.</li>
+                    </ul>
+                    
+                    <div class="highlight-box">
+                        <i class="fas fa-gavel me-2" style="color: var(--primary-blue);"></i>
+                        <strong>Base légale :</strong> Nous traitons vos données sur la base de l'exécution du contrat, de votre consentement, de nos obligations légales et de notre intérêt légitime à améliorer nos services.
+                    </div>
+                </section>
+
+                <!-- 3. PARTAGE DES DONNÉES -->
+                <section id="partage">
+                    <h2 class="section-title">
+                        <i class="fas fa-share-alt"></i>
+                        3. Partage de vos données
+                    </h2>
+                    
+                    <p>Nous partageons vos données uniquement dans les cas suivants :</p>
+                    
+                    <h3 class="subsection-title">3.1 Avec d'autres utilisateurs</h3>
+                    <ul>
+                        <li>Lorsque vous achetez un article, le vendeur reçoit votre nom</li>
+                        <li>Lorsque vous vendez un article, l'acheteur reçoit votre nom.</li>
+                    </ul>
+                    
+                    <h3 class="subsection-title">3.2 Avec nos prestataires</h3>
+                    <ul>
+                        <li><strong>Wave / Orange Money :</strong> pour les remboursements (nous partageons votre numéro de téléphone).</li>
+                        <li><strong>Services de livraison :</strong> coordination des livraisons (noms et adresses).</li>
+                    </ul>
+                    
+                    <h3 class="subsection-title">3.3 Avec les autorités</h3>
+                    <p>Nous pouvons être amenés à divulguer vos données si la loi nous y oblige ou pour répondre à une demande légale des autorités sénégalaises.</p>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>jëndUp ne vend pas vos données personnelles à des tiers.</strong> Nous ne partageons vos informations que dans le strict nécessaire au fonctionnement du service.
+                    </div>
+                </section>
+
+                <!-- 4. CONSERVATION DES DONNÉES -->
+                <section id="conservation">
+                    <h2 class="section-title">
+                        <i class="fas fa-clock"></i>
+                        4. Conservation de vos données
+                    </h2>
+                    
+                    <p>Nous conservons vos données aussi longtemps que nécessaire pour vous fournir nos services et respecter nos obligations légales.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead style="background: var(--primary-blue); color: white;">
+                                <tr>
+                                    <th>Type de données</th>
+                                    <th>Durée de conservation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Compte utilisateur</td>
+                                    <td>Tant que le compte est actif</td>
+                                </tr>
+                                <tr>
+                                    <td>Données de transaction</td>
+                                    <td>10 ans (obligation légale)</td>
+                                </tr>
+                                <tr>
+                                    <td>Logs de connexion</td>
+                                    <td>1 an</td>
+                                </tr>
+                                <tr>
+                                    <td>Images des produits</td>
+                                    <td>Jusqu'à suppression de l'annonce + 30 jours</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <p class="text-muted small mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Après ces délais, vos données sont anonymisées ou supprimées définitivement.
+                    </p>
+                </section>
+
+                <!-- 5. SÉCURITÉ DES DONNÉES -->
+                <section id="securite">
+                    <h2 class="section-title">
+                        <i class="fas fa-shield-alt"></i>
+                        5. Sécurité de vos données
+                    </h2>
+                    
+                    <p>Nous mettons en œuvre des mesures techniques et organisationnelles pour protéger vos données :</p>
+                    
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3">
+                                <i class="fas fa-lock fa-3x mb-2" style="color: var(--primary-blue);"></i>
+                                <h5>Chiffrement SSL/TLS</h5>
+                                <p class="small">Toutes vos communications sont chiffrées</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3">
+                                <i class="fas fa-key fa-3x mb-2" style="color: var(--primary-blue);"></i>
+                                <h5>Mots de passe hachés</h5>
+                                <p class="small">Vos mots de passe ne sont jamais stockés en clair</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3">
+                                <i class="fas fa-user-secret fa-3x mb-2" style="color: var(--primary-blue);"></i>
+                                <h5>Accès restreint</h5>
+                                <p class="small">Seules les personnes autorisées accèdent aux données</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <i class="fas fa-check-circle me-2" style="color: var(--success-green);"></i>
+                        <strong>Notre promesse :</strong> Nous surveillons en permanence notre plateforme pour détecter et prévenir toute tentative d'intrusion.
+                    </div>
+                </section>
+
+                <!-- 6. VOS DROITS -->
+                <section id="droits">
+                    <h2 class="section-title">
+                        <i class="fas fa-gavel"></i>
+                        6. Vos droits sur vos données
+                    </h2>
+                    
+                    <p>Conformément à la réglementation sénégalaise et au RGPD, vous disposez des droits suivants :</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-eye"></i>
+                                <h4>Droit d'accès</h4>
+                                <p>Vous pouvez demander à consulter toutes les données que nous détenons sur vous.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-edit"></i>
+                                <h4>Droit de rectification</h4>
+                                <p>Vous pouvez corriger vos informations si elles sont inexactes.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-trash"></i>
+                                <h4>Droit à l'effacement</h4>
+                                <p>Vous pouvez demander la suppression de vos données dans certaines limites.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-ban"></i>
+                                <h4>Droit d'opposition</h4>
+                                <p>Vous pouvez vous opposer à certains traitements de vos données.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-file-export"></i>
+                                <h4>Droit à la portabilité</h4>
+                                <p>Vous pouvez récupérer vos données dans un format réutilisable.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-card">
+                                <i class="fas fa-times-circle"></i>
+                                <h4>Retrait du consentement</h4>
+                                <p>Vous pouvez retirer votre consentement à tout moment.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="subsection-title mt-3">Comment exercer vos droits ?</h3>
+                    <p>Pour exercer vos droits, contactez-nous à :</p>
+                    <ul>
+                        <li><i class="fas fa-envelope me-2" style="color: var(--primary-blue);"></i> <strong>Email :</strong> jendup@gmail.com</li>
+                        <li><i class="fas fa-phone me-2" style="color: var(--primary-blue);"></i> <strong>Téléphone :</strong> +221 76 320 62 26</li>
+                    </ul>
+                    
+                    <p>Nous traiterons votre demande dans un délai maximum de <strong>5 jours</strong>.</p>
+                </section>
+                
+
+                <!-- MODIFICATIONS DE LA POLITIQUE -->
+                <section id="modifications">
+                    <h2 class="section-title">
+                        <i class="fas fa-edit"></i>
+                        Modifications de cette politique
+                    </h2>
+                    
+                    <p>Nous pouvons modifier cette politique de confidentialité de temps à autre. La version la plus récente est toujours disponible sur cette page. En cas de modification importante, nous vous en informerons par email ou via une notification sur la plateforme.</p>
+                    
+                    <p class="text-muted">
+                        <i class="fas fa-history me-1"></i>
+                        Version 1.0 - 16 février 2026
+                    </p>
+                </section>
+
+                <!-- Section finale -->
+                <div class="highlight-box text-center mt-5" style="background: linear-gradient(135deg, #fff1e8, #ffe4d6);">
+                    <i class="fas fa-heart fa-3x mb-3" style="color: var(--primary-blue);"></i>
+                    <h4>Merci de faire confiance à jëndUp</h4>
+                    <p class="mb-0">Nous nous engageons à protéger votre vie privée avec la même attention que nous mettons à vous offrir la meilleure expérience d'achat et de vente.</p>
+                </div>
+
+                <!-- Liens footer -->
+                <div class="footer-links">
+                    <a href="home.html"><i class="fas fa-home me-1"></i>Accueil</a>
+                    <a href="annonces.html"><i class="fas fa-search me-1"></i>Annonces</a>
+                    <a href="vendre.html"><i class="fas fa-plus-circle me-1"></i>Vendre</a>
+                    <a href="cgv.html"><i class="fas fa-file-contract me-1"></i>CGU</a>
+                    <a href="contact.html"><i class="fas fa-envelope me-1"></i>Contact</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        // Script pour le bouton retour en haut
+        const btnTop = document.getElementById('btnTop');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                btnTop.classList.add('show');
+            } else {
+                btnTop.classList.remove('show');
+            }
+        });
+        
+        btnTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Script pour les ancres en douceur
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+        
+        // Fonction pour accepter les cookies (simulée)
+        function accepterCookies() {
+            alert('Merci ! Vos préférences de cookies ont été enregistrées.');
+            document.querySelector('.cookie-banner').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

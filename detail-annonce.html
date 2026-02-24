@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail de l'annonce - jëndUp</title>
+    
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+        <!-- Favicon de base -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    
+    <style>
+        :root {
+            --primary-blue: #4361ee;
+            --secondary-purple: #764ba2;
+            --light-bg: #f8f9fa;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --text-color: #333;
+            --border-color: #e9ecef;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple)) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 15px;
+        }
+        
+        /* Gallery */
+        .gallery-container {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .main-image:hover {
+            transform: scale(1.02);
+        }
+        
+        .thumbnail-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .thumbnail:hover {
+            transform: translateY(-2px);
+        }
+        
+        .thumbnail.active {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.3);
+        }
+        
+        /* Info produit */
+        .product-info {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .product-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+        
+        .product-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+        }
+        
+        .product-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+        
+        .meta-item i {
+            color: var(--primary-blue);
+            width: 20px;
+        }
+        
+        .product-description {
+            color: var(--text-color);
+            line-height: 1.6;
+            margin-bottom: 25px;
+            white-space: pre-line;
+            word-wrap: break-word;
+        }
+        
+        /* Vendeur card */
+        .seller-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .seller-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .seller-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .seller-info {
+            flex: 1;
+        }
+        
+        .seller-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+        
+        .seller-rating {
+            color: #ffc107;
+        }
+        
+        .seller-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        /* Actions */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-acheter {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-acheter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-negocier {
+            background: white;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-negocier:hover {
+            background: var(--light-bg);
+            transform: translateY(-2px);
+        }
+        
+        .btn-message {
+            background: var(--light-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-message:hover {
+            background: #e9ecef;
+        }
+        
+        /* Détails techniques */
+        .details-grid {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .details-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .detail-label {
+            width: 150px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        
+        .detail-value {
+            flex: 1;
+            color: var(--text-color);
+        }
+        
+        /* Produits similaires */
+        .similar-products {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .similar-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .similar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .similar-card {
+            background: var(--light-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .similar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .similar-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        
+        .similar-info {
+            padding: 12px;
+        }
+        
+        .similar-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .similar-price {
+            font-weight: 700;
+            color: var(--primary-blue);
+            font-size: 1.1rem;
+        }
+        
+        /* Modal d'achat avec carte */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+        }
+        
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        
+        .current-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+        }
+        
+        .frais-container {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .frais-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .frais-row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+        
+        /* 🔥 Style pour le message de commande gratuite */
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .badge-gratuit {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .badge-gratuit i {
+            margin-right: 5px;
+        }
+        
+        .map-container {
+            height: 300px;
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            z-index: 1;
+        }
+        
+        .map-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .map-info i {
+            color: var(--primary-blue);
+        }
+        
+        /* Loading et erreurs */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .error-state i {
+            font-size: 64px;
+            color: var(--danger-red);
+            margin-bottom: 20px;
+        }
+        
+        /* Menu utilisateur */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            min-width: 250px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-info {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-email {
+            font-weight: bold;
+            color: var(--primary-blue);
+            word-break: break-all;
+        }
+
+        .dropdown-link {
+            display: block;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-link:hover {
+            background-color: #f0f2ff;
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+
+        .dropdown-link i {
+            width: 20px;
+            margin-right: 8px;
+        }
+
+        .btn-deconnexion {
+            width: 100%;
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-deconnexion:hover {
+            background: #c82333;
+        }
+
+        .badge-panier {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-red);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+
+
+
+
+        /* Dans votre section <style>, ajoutez : */
+#geoloc-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    font-weight: 500;
+}
+
+.map-container {
+    position: relative;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="home.html">
+                <i class="fas fa-exchange-alt me-2"></i><span style="color: black;">jënd</span>Up
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="mx-auto">
+                    <span class="text-white">Détail de l'annonce</span>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-menu">
+                    <button id="btn-user" class="btn btn-outline-light d-none position-relative">
+                        <i class="fa fa-user me-1"></i>
+                        <span id="user-name"></span>
+                    </button>
+                    <div id="user-dropdown" class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-email" id="dropdown-email"></div>
+                            <div class="user-name" id="dropdown-name"></div>
+                            <div class="small text-muted" id="dropdown-telephone"></div>
+                        </div>
+                        <a href="vendre.html" class="dropdown-link">
+                            <i class="fa fa-plus-circle"></i> Vendre un article
+                        </a>
+                        <a href="mes-produits.html" class="dropdown-link">
+                            <i class="fa fa-box"></i> Mes produits
+                        </a>
+                        <a href="historique-ventes.html" class="dropdown-link">
+                            <i class="fa fa-history"></i> Historique ventes
+                        </a>
+                        <a href="historique-commandes.html" class="dropdown-link">
+                            <i class="fa fa-shopping-bag"></i> Mes achats
+                        </a>
+                        <button class="btn-deconnexion" id="btn-deconnexion">
+                            <i class="fa fa-sign-out-alt"></i> Déconnexion
+                        </button>
+                    </div>
+                    <a href="connexion.html" class="btn btn-outline-light position-relative" id="btn-connexion">
+                        <i class="fa fa-sign-in-alt me-1"></i> Connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="main-container">
+        <!-- Indicateur de chargement -->
+        <div id="loadingIndicator" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <span class="ms-3 text-muted">Chargement de l'annonce...</span>
+        </div>
+
+        <!-- État d'erreur -->
+        <div id="errorState" class="error-state d-none">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3 class="mb-3">Annonce non trouvée</h3>
+            <p class="text-muted mb-4">L'annonce que vous recherchez n'existe pas ou a été supprimée.</p>
+            <a href="annonces.html" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Voir toutes les annonces
+            </a>
+        </div>
+
+        <!-- Contenu de l'annonce -->
+        <div id="annonceContent" class="d-none">
+            <div class="row">
+                <!-- Colonne gauche - Images -->
+                <div class="col-lg-7">
+                    <div class="gallery-container">
+                        <img id="mainImage" class="main-image" src="" alt="Image principale" onclick="ouvrirLightbox()">
+                        <div id="thumbnails" class="thumbnail-container"></div>
+                    </div>
+                </div>
+
+                <!-- Colonne droite - Infos et actions -->
+                <div class="col-lg-5">
+                    <!-- Info produit -->
+                    <div class="product-info">
+                        <h1 id="productTitle" class="product-title"></h1>
+                        <div id="productPrice" class="product-price"></div>
+                        
+                        <div class="product-meta" id="productMeta"></div>
+                        
+                        <div id="productDescription" class="product-description"></div>
+
+                        <!-- Actions -->
+                        <div class="action-buttons" id="actionButtons"></div>
+                    </div>
+
+                    <!-- Carte vendeur -->
+                    <div id="sellerCard" class="seller-card"></div>
+                </div>
+            </div>
+
+            <!-- Détails techniques -->
+            <div id="detailsTechniques" class="details-grid"></div>
+
+            <!-- Produits similaires -->
+            <div id="similarProducts" class="similar-products"></div>
+        </div>
+    </div>
+
+    <!-- Modal d'achat avec carte et frais -->
+    <div class="modal fade" id="achatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Finaliser l'achat
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 🔥 Conteneur pour le message de commande gratuite (sera injecté par JS) -->
+                    <div id="fraisInfoContainer"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Récapitulatif</h6>
+                            <div class="frais-container">
+                                <div class="frais-row">
+                                    <span>Prix de l'article</span>
+                                    <span class="fw-bold" id="prixArticle"></span>
+                                </div>
+                                <div class="frais-row">
+                                    <span>Frais protection acheteur</span>
+                                    <span class="fw-bold" id="fraisAcheteur">0 FCFA</span>
+                                </div>
+                                <div class="frais-row">
+                                    <span>Livraison</span>
+                                    <span class="fw-bold" id="fraisLivraison">0 FCFA</span>
+                                </div>
+                                <div class="frais-row">
+                                    <span>Total à payer</span>
+                                    <span class="fw-bold text-primary" id="totalAvecFrais">0 FCFA</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 🔥 Conteneur pour le badge de commande gratuite -->
+                            <div id="gratuitBadgeContainer"></div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Nos frais de protection acheteur servent à garantir que votre argent est sécurisé et que vous serez remboursé si l’article n’arrive pas ou ne correspond pas à la description. Le prix de l'article est quant à lui fixé par le vendeur.
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Choisissez votre position de livraison</h6>
+                            <div id="map" class="map-container"></div>
+                            <div class="map-info">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                Déplacez le marqueur pour choisir votre position
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Annuler
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="confirmerAchatDetail()">
+                        <i class="fas fa-check me-2"></i>Confirmer l'achat
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox pour les images -->
+    <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body text-center">
+                    <img id="lightboxImage" src="" class="img-fluid" style="max-height: 90vh;">
+                </div>
+                <div class="modal-footer justify-content-center border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Leaflet JS pour la carte -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Script JS principal -->
+    <script src="script.js"></script>
+</body>
+</html>
