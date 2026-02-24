@@ -1,4 +1,4 @@
-// firebase-config.js - À ajouter dans votre projet
+/*// firebase-config.js - À ajouter dans votre projet
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
 
@@ -56,4 +56,4 @@ onMessage(messaging, (payload) => {
         body: payload.notification.body,
         icon: '/icon-192.png'
     });
-});
+});*/
