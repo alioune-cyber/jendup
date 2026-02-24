@@ -1146,7 +1146,348 @@ async function verifierConnexionExistante() {
 
 
 
+
+
+
+
+
+
+
 // ============================================
+// PAGE CONNEXION - UNIQUEMENT CONNEXION
+// ============================================
+
+let connexionLoading = false;
+
+// Initialiser la page de connexion
+function initialiserPageConnexion() {
+    console.log('🔑 Initialisation page de connexion...');
+    
+    initialiserEvenementsConnexion();
+    activerValidationFormulaire();
+    chargerEmailMemoire();
+    verifierConnexionExistante();
+}
+
+// Initialiser les événements de la page de connexion
+function initialiserEvenementsConnexion() {
+    // Toggle mot de passe
+    const togglePassword = document.getElementById('toggle-password');
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    }
+
+    // Soumission du formulaire
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            connexion();
+        });
+    }
+
+    // Sauvegarde de l'email dans localStorage
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('blur', function() {
+            if (this.value.trim()) {
+                localStorage.setItem('remembered_email', this.value.trim());
+            }
+        });
+    }
+}
+
+// Charger l'email sauvegardé
+function chargerEmailMemoire() {
+    const rememberedEmail = localStorage.getItem('remembered_email');
+    if (rememberedEmail) {
+        const emailInput = document.getElementById('email');
+        if (emailInput) {
+            emailInput.value = rememberedEmail;
+            emailInput.dispatchEvent(new Event('input'));
+        }
+    }
+}
+
+// Activer/désactiver le bouton de connexion selon la validité du formulaire
+function activerValidationFormulaire() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const btnLogin = document.getElementById('btn-login');
+    
+    if (!emailInput || !passwordInput || !btnLogin) return;
+    
+    const verifierChamps = function() {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        btnLogin.disabled = !email || !password;
+    };
+    
+    emailInput.addEventListener('input', verifierChamps);
+    passwordInput.addEventListener('input', verifierChamps);
+}
+
+// Fonction de connexion principale
+async function connexion() {
+    if (connexionLoading || !supabase1) return;
+    
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    
+    if (!emailInput || !passwordInput) return;
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    // Validation basique
+    if (!email || !password) {
+        afficherAlerte('Veuillez remplir tous les champs.', 'danger');
+        return;
+    }
+
+    if (!validerEmail(email)) {
+        afficherAlerte('Veuillez saisir une adresse email valide.', 'danger');
+        return;
+    }
+
+    setConnexionLoading(true);
+
+    try {
+        console.log('🔄 Tentative de connexion pour:', email);
+        
+        // Connexion avec Supabase Auth
+        const { data, error } = await supabase1.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) throw error;
+
+        const user = data.user;
+        if (!user) throw new Error('Erreur de connexion');
+
+        console.log('✅ Connexion auth réussie, user ID:', user.id);
+
+        // Sauvegarder l'email pour la prochaine fois
+        localStorage.setItem('remembered_email', email);
+
+        // Vérifier le profil utilisateur et les rôles
+        const profil = await verifierOuCreerProfil(user);
+        
+        if (!profil) {
+            await supabase1.auth.signOut();
+            throw new Error('Erreur de configuration du profil');
+        }
+
+        // Afficher un message de bienvenue personnalisé
+        let messageBienvenue = `Bienvenue ${profil.nom || email.split('@')[0]} !`;
+        afficherAlerte(messageBienvenue, 'success');
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const { data: { session: sessionVerifiee } } = await supabase1.auth.getSession();
+        if (!sessionVerifiee) {
+            throw new Error('Session non établie, veuillez réessayer');
+        }
+
+        console.log('✅ Session vérifiée, redirection...');
+        
+        setTimeout(() => {
+            window.location.href = 'home.html?connexion=success&t=' + Date.now();
+        }, 2000);
+
+    } catch (error) {
+        console.error('❌ Erreur de connexion:', error);
+        
+        let messageErreur = 'Erreur de connexion';
+        if (error.message.includes('Invalid login credentials')) {
+            messageErreur = 'Email ou mot de passe incorrect';
+        } else if (error.message.includes('Email not confirmed')) {
+            messageErreur = 'Veuillez confirmer votre email avant de vous connecter. Vérifiez votre boîte de réception.';
+        } else {
+            messageErreur = error.message;
+        }
+        
+        afficherAlerte(messageErreur, 'danger');
+    } finally {
+        setConnexionLoading(false);
+    }
+}
+
+// Vérifier ou créer le profil utilisateur
+async function verifierOuCreerProfil(user) {
+    if (!supabase1) return null;
+    
+    try {
+        const { data: existingUser, error: selectError } = await supabase1
+            .from('utilisateurs')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (selectError) {
+            console.warn('Erreur vérification utilisateur:', selectError);
+        }
+
+        if (existingUser) {
+            console.log('✅ Profil existant trouvé:', existingUser);
+            return existingUser;
+        }
+
+        console.log('🆕 Création du profil utilisateur...');
+        
+        const nom = user.user_metadata?.nom || 
+                   user.user_metadata?.full_name || 
+                   user.email?.split('@')[0] || 
+                   'Utilisateur';
+        
+        const telephone = user.user_metadata?.telephone || '';
+        
+        const nouveauProfil = {
+            id: user.id,
+            email: user.email,
+            nom: nom,
+            telephone: telephone,
+            roles: ['acheteur', 'vendeur'],
+            date_inscription: new Date().toISOString(),
+            avatar: null,
+            note_moyenne: 0,
+            nombre_ventes: 0,
+            nombre_achats: 0
+        };
+
+        const { data: insertedUser, error: insertError } = await supabase1
+            .from('utilisateurs')
+            .insert([nouveauProfil])
+            .select()
+            .single();
+
+        if (insertError) {
+            console.error('❌ Erreur création profil:', insertError);
+            
+            if (insertError.code === '23505') {
+                const { data: retryUser } = await supabase1
+                    .from('utilisateurs')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                    
+                if (retryUser) return retryUser;
+            }
+            
+            return null;
+        }
+
+        console.log('✅ Profil utilisateur créé avec double rôle');
+        return insertedUser;
+
+    } catch (error) {
+        console.error('❌ Erreur lors de la vérification/création du profil:', error);
+        return null;
+    }
+}
+
+function validerEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function setConnexionLoading(loading) {
+    connexionLoading = loading;
+    const btnLogin = document.getElementById('btn-login');
+    const loginText = document.getElementById('login-text');
+    const loginSpinner = document.getElementById('login-spinner');
+    
+    if (!btnLogin || !loginText || !loginSpinner) return;
+    
+    btnLogin.disabled = loading;
+    
+    if (loading) {
+        loginText.classList.add('d-none');
+        loginSpinner.classList.remove('d-none');
+    } else {
+        loginText.classList.remove('d-none');
+        loginSpinner.classList.add('d-none');
+    }
+}
+
+function afficherAlerte(message, type) {
+    let alertContainer = document.getElementById('alert-container');
+    
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'alert-container';
+        alertContainer.style.position = 'fixed';
+        alertContainer.style.top = '20px';
+        alertContainer.style.right = '20px';
+        alertContainer.style.zIndex = '9999';
+        document.body.appendChild(alertContainer);
+    }
+    
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show shadow`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+    `;
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+async function verifierConnexionExistante() {
+    if (!supabase1) return;
+    
+    try {
+        const { data: { session } } = await supabase1.auth.getSession();
+        
+        if (session && session.user) {
+            console.log('👤 Utilisateur déjà connecté, redirection vers l\'accueil');
+            window.location.href = 'home.html?session=active';
+        }
+    } catch (error) {
+        console.warn('Erreur vérification session existante:', error);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*// ============================================
 // PAGE CONNEXION
 // ============================================
 
@@ -1330,7 +1671,7 @@ async function verifierOuCreerProfil(user) {
 
 // ── Réinitialisation mot de passe ──────────────────────────────────────────
 
-function afficherModalResetPassword() {
+/*function afficherModalResetPassword() {
     resetStep = 1;
     mettreAJourModalReset();
     if (resetPasswordModal) resetPasswordModal.show();
@@ -1398,9 +1739,9 @@ function mettreAJourModalReset() {
                 <i class="fa fa-check me-1"></i> Fermer
             </button>`;
     }
-}
+}*/
 
-// ✅ Utilise le système natif Supabase — pas de table custom, pas de Resend
+/*// ✅ Utilise le système natif Supabase — pas de table custom, pas de Resend
 async function envoyerResetPassword() {
     if (!supabase1) return;
 
@@ -1506,7 +1847,7 @@ async function verifierConnexionExistante() {
         console.warn('Erreur vérification session existante:', error);
     }
 }
-
+*/
 
 
 
@@ -1516,7 +1857,7 @@ async function verifierConnexionExistante() {
 // ============================================
 
 // Variables supplémentaires pour la réinitialisation
-//let resetStep = 1; // 1 = formulaire email, 2 = confirmation
+let resetStep = 1; // 1 = formulaire email, 2 = confirmation
 
 
 // Remplacer la fonction afficherModalResetPassword existante par celle-ci
@@ -1616,7 +1957,7 @@ function mettreAJourModalReset() {
 
 
 
-function afficherModalResetPassword() {
+/*function afficherModalResetPassword() {
     resetStep = 1;
     mettreAJourModalReset();
     if (resetPasswordModal) resetPasswordModal.show();
@@ -1685,14 +2026,14 @@ function mettreAJourModalReset() {
             </button>`;
     }
 }
+*/
 
 
 
 
 
 
-
-// Remplacer la fonction envoyerResetPassword existante par celle-ci (améliorée)
+/*// Remplacer la fonction envoyerResetPassword existante par celle-ci (améliorée)
 async function envoyerResetPassword() {
     if (!supabase1) return;
     
@@ -1750,7 +2091,7 @@ async function envoyerResetPassword() {
         if (resetText) resetText.classList.remove('d-none');
         if (resetSpinner) resetSpinner.classList.add('d-none');
     }
-}
+}*/
 
 
 
@@ -8253,7 +8594,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const { data, error } = await supabase1.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
-                            redirectTo: 'https://alioune-cyber.github.io/jendup/home.html'
+                            redirectTo: 'https://jendup.shop/'
                         }
                     });
                     

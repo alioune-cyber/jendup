@@ -1,4 +1,4 @@
-/*// firebase-messaging-sw.js - À placer à la racine de votre site
+// firebase-messaging-sw.js - À placer à la racine de votre site
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
 
@@ -41,4 +41,4 @@ self.addEventListener('notificationclick', (event) => {
         const urlToOpen = event.notification.data?.url || '/';
         event.waitUntil(clients.openWindow(urlToOpen));
     }
-});*/
+});
