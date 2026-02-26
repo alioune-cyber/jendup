@@ -8587,21 +8587,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof initialiserPageConnexion === 'function') {
             initialiserPageConnexion();
         }
-
-         const btnGoogle = document.getElementById('google-login');
-            if (btnGoogle) {
-                btnGoogle.addEventListener('click', async () => {
-                    const { data, error } = await supabase1.auth.signInWithOAuth({
-                        provider: 'google',
-                        options: {
-                            redirectTo: 'https://jendup.shop/'
-                        }
-                    });
-                    
-                    if (error) console.error('Erreur Google Auth:', error.message);
-                    else console.log('Connexion Google réussie:', data);
-                });
-            }
     } 
     else if (filename === 'inscription.html' || path.includes('inscription') || filename.includes('inscription')) {
         // Page d'inscription
